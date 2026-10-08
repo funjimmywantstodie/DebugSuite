@@ -2,57 +2,51 @@ local m = {}
 m.__index = m
 
 local colors = require("../Colors")
+local lifecycle = require("../util/Lifecycle")
 
-local types = require("../Types")
-
-local function updateSize(section: types.Section, consoleFrame: Frame, height: number?): ()
-    local width = section.contentFrame.AbsoluteSize.X
-    local padding = section.contentFrame:FindFirstChildOfClass("UIPadding")
-    if padding then
-        width -= width * (padding.PaddingLeft.Scale + padding.PaddingRight.Scale)
-            + padding.PaddingLeft.Offset + padding.PaddingRight.Offset
-    end
-    local side = math.max(0, width)
-    local size = UDim2.fromOffset(side, height or side)
-    if consoleFrame.Size ~= size then
-        consoleFrame.Size = size
-    end
-end
-
-
-local function createConsole(section: types.Section, opts: types.ConsoleOpts): Frame
-    local consoleFrame = Instance.new("Frame")
-    consoleFrame.Name = "Console"
-    consoleFrame.BackgroundColor3 = colors.console.background
-    consoleFrame.Parent = section.contentFrame
-    consoleFrame.Size = UDim2.new(1, 0, 0, 0)
-    consoleFrame.ZIndex = section.contentFrame.ZIndex + 1
-
-    local conn = section.contentFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-        updateSize(section, consoleFrame, opts.height)
+function m.new(owner, opts)
+    opts = opts or {}
+    local frame = Instance.new("ScrollingFrame")
+    frame.Name = opts.text or "Console"
+    frame.BackgroundColor3 = colors.console.background
+    frame.BorderSizePixel = 0
+    frame.Size = UDim2.new(1, 0, 0, opts.height or 200)
+    frame.CanvasSize = UDim2.new()
+    frame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    frame.ScrollBarThickness = 6
+    frame.ScrollingDirection = Enum.ScrollingDirection.Y
+    frame.ZIndex = owner.contentFrame.ZIndex + 1
+    frame.Parent = owner.contentFrame
+    local padding = Instance.new("UIPadding")
+    padding.PaddingLeft = UDim.new(0, 8)
+    padding.PaddingRight = UDim.new(0, 8)
+    padding.PaddingTop = UDim.new(0, 8)
+    padding.PaddingBottom = UDim.new(0, 8)
+    padding.Parent = frame
+    local self = lifecycle.attach(setmetatable({}, m), frame, owner)
+    self.consoleFrame = frame
+    self.entries = {}
+    self.maxEntries = math.max(1, opts.maxEntries or 1000)
+    self.autoScroll = opts.autoScroll ~= false
+    self.paused = false
+    self.order = 0
+    local layout = Instance.new("UIListLayout")
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Parent = frame
+    self.scope:Connect(layout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+        if self.autoScroll then
+            frame.CanvasPosition = Vector2.new(0, math.max(0, layout.AbsoluteContentSize.Y + 16 - frame.AbsoluteSize.Y))
+        end
     end)
-    table.insert(section.parentTab.parentWindow.conns, conn)
-    updateSize(section, consoleFrame, opts.height)
-
-    local uilistlayout = Instance.new("UIListLayout")
-    uilistlayout.SortOrder = Enum.SortOrder.LayoutOrder
-    uilistlayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-    uilistlayout.Parent = consoleFrame
-    return consoleFrame
-end
-
-function m.new(parentSection: types.Section, opts: types.ConsoleOpts): types.Console
-    local self = setmetatable({}, m)
-
-    self.consoleFrame = createConsole(parentSection, opts)
     return self
 end
 
-function m.NewEntry(self: types.Console, text: string, messageType: types.ConsoleMessageType): ()
+function m:NewEntry(text: string, messageType: string)
+    if self.paused or self.destroyed then return end
     local entry = Instance.new("TextLabel")
     entry.Name = "Entry"
     entry.BackgroundTransparency = 1
-    entry.TextColor3 = colors.console[messageType]
+    entry.TextColor3 = colors.console[messageType] or colors.text
     entry.TextXAlignment = Enum.TextXAlignment.Left
     entry.TextYAlignment = Enum.TextYAlignment.Top
     entry.Font = Enum.Font.Code
@@ -61,9 +55,30 @@ function m.NewEntry(self: types.Console, text: string, messageType: types.Consol
     entry.Text = text
     entry.Size = UDim2.new(1, -10, 0, 0)
     entry.AutomaticSize = Enum.AutomaticSize.Y
-    entry.LayoutOrder = #self.consoleFrame:GetChildren()
-    entry.Parent = self.consoleFrame
-    entry.ZIndex = self.consoleFrame.ZIndex + 1
+    self.order += 1
+    entry.LayoutOrder = self.order
+    entry.ZIndex = self.frame.ZIndex + 1
+    entry.Parent = self.frame
+    table.insert(self.entries, entry)
+    if #self.entries > self.maxEntries then table.remove(self.entries, 1):Destroy() end
+end
+
+function m:Append(entries)
+    for _, entry in entries do self:NewEntry(entry.text, entry.messageType or "info") end
+end
+
+function m:SetPaused(value: boolean)
+    self.paused = value
+end
+
+function m:SetAutoScroll(value: boolean)
+    self.autoScroll = value
+end
+
+function m:Clear()
+    for _, entry in self.entries do entry:Destroy() end
+    table.clear(self.entries)
+    self.frame.CanvasPosition = Vector2.zero
 end
 
 return m

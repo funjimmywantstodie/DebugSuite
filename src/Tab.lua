@@ -5,17 +5,19 @@ local colors = require("./Colors")
 
 local types = require("./Types")
 local section = require("./Section")
+local container = require("./Container")
+local lifecycle = require("./util/Lifecycle")
 
 local function createTabBar(root: Frame, name: string): TextButton
     local tabBtn = Instance.new("TextButton")
     tabBtn.Name = name
-    tabBtn.Size = UDim2.new(1, 0, .05, 0)
+    tabBtn.Size = UDim2.new(1, 0, 0, 28)
     tabBtn.Position = UDim2.new(0, 0, 0, 0)
     tabBtn.BackgroundColor3 = colors.tabButton
     tabBtn.TextColor3 = colors.text
     tabBtn.Text = name
     tabBtn.Parent = root
-    tabBtn.ZIndex = 30 
+    tabBtn.ZIndex = 30
 
     return tabBtn
 end
@@ -37,11 +39,11 @@ local function createArea(parent: Instance, name: string, order: number): (Frame
     return area, layout
 end
 
-local function createContainer(root: Frame): ScrollingFrame
+local function createContainer(root: Frame, topbarHeight: number): ScrollingFrame
     local container = Instance.new("ScrollingFrame")
     container.Name = "TabContainer"
-    container.Size = UDim2.new(0.8, 0, 0.85, 0)
-    container.Position = UDim2.new(0.2, 0, 0.15, 0)
+    container.Size = UDim2.new(0.8, 0, 1, -topbarHeight)
+    container.Position = UDim2.new(0.2, 0, 0, topbarHeight)
     container.BackgroundColor3 = colors.tabContainer
     container.BorderSizePixel = 0
     container.ZIndex = 35
@@ -54,64 +56,90 @@ local function createContainer(root: Frame): ScrollingFrame
     return container
 end
 
-function m.new(window: types.Window, name: string): types.Tab
+function m.new(window: types.Window, name: string, opts: types.TabOpts?): types.Tab
     local self = setmetatable({}, m)
 
     self.tabBtn = createTabBar(window.guis["Sidebar"], name)
     self.parentWindow = window
-    self.container = createContainer(window.guis.Root)
-    local content = createArea(self.container, "Sections", 0)
-    content.Position = UDim2.fromOffset(5, 5)
-    -- Insets apply to the shared wrapper, including full-width sections.
-    content.Size = UDim2.new(1, -10 - self.container.ScrollBarThickness, 0, 0)
-    local top = createArea(content, "Top", 0)
+    self.container = createContainer(window.guis.Root, window.guis.Topbar.Size.Y.Offset)
+    lifecycle.attach(self, self.container, window)
+    if opts and opts.layout == "free" then
+        local content = Instance.new("Frame")
+        content.Name = "Content"
+        content.BackgroundTransparency = 1
+        content.Size = UDim2.fromScale(1, 1)
+        content.ZIndex = self.container.ZIndex + 1
+        content.Parent = self.container
+        self.container.AutomaticCanvasSize = Enum.AutomaticSize.None
+        self.contentFrame = content
+        self.columns = { left = content, right = content, top = content, bottom = content, full = content }
+    else
+        local content = createArea(self.container, "Sections", 0)
+        content.Position = UDim2.fromOffset(5, 5)
+        -- Insets apply to the shared wrapper, including full-width sections.
+        content.Size = UDim2.new(1, -10 - self.container.ScrollBarThickness, 0, 0)
+        local top = createArea(content, "Top", 0)
 
-    local row = Instance.new("Frame")
-    row.Name = "Columns"
-    row.BackgroundTransparency = 1
-    row.Size = UDim2.new(1, 0, 0, 0)
-    row.LayoutOrder = 1
-    row.ZIndex = 36
-    row.Parent = content
+        local row = Instance.new("Frame")
+        row.Name = "Columns"
+        row.BackgroundTransparency = 1
+        row.Size = UDim2.new(1, 0, 0, 0)
+        row.LayoutOrder = 1
+        row.ZIndex = 36
+        row.Parent = content
 
-    local left, leftLayout = createArea(row, "Left", 0)
-    local right, rightLayout = createArea(row, "Right", 1)
-    left.Size = UDim2.new(0.5, -3, 0, 0)
-    right.Size = UDim2.new(0.5, -3, 0, 0)
-    right.Position = UDim2.new(0.5, 3, 0, 0)
+        local left, leftLayout = createArea(row, "Left", 0)
+        local right, rightLayout = createArea(row, "Right", 1)
+        left.Size = UDim2.new(0.5, -3, 0, 0)
+        right.Size = UDim2.new(0.5, -3, 0, 0)
+        right.Position = UDim2.new(0.5, 3, 0, 0)
 
-    -- Reserve space for the taller column before placing bottom sections.
-    local function updateRowHeight()
-        local height = math.max(leftLayout.AbsoluteContentSize.Y, rightLayout.AbsoluteContentSize.Y)
-        row.Size = UDim2.new(1, 0, 0, height)
+        -- Reserve space for the taller column before placing bottom sections.
+        local function updateRowHeight()
+            local height = math.max(leftLayout.AbsoluteContentSize.Y, rightLayout.AbsoluteContentSize.Y)
+            row.Size = UDim2.new(1, 0, 0, height)
+        end
+        self.scope:Connect(leftLayout:GetPropertyChangedSignal("AbsoluteContentSize"), updateRowHeight)
+        self.scope:Connect(rightLayout:GetPropertyChangedSignal("AbsoluteContentSize"), updateRowHeight)
+        updateRowHeight()
+
+        local bottom = createArea(content, "Bottom", 2)
+        self.columns = {
+            left = left,
+            right = right,
+            top = top,
+            bottom = bottom,
+            full = bottom,
+        }
+        self.contentFrame = self.columns.bottom
     end
-    table.insert(window.conns, leftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateRowHeight))
-    table.insert(window.conns, rightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateRowHeight))
-    updateRowHeight()
+    self.sections = self.components
+    self.scope:Add(function() self.tabBtn:Destroy() end)
 
-    local bottom = createArea(content, "Bottom", 2)
-    self.columns = {
-        left = left,
-        right = right,
-        top = top,
-        bottom = bottom,
-        full = bottom,
-    }
-    self.sections = {} :: {types.Section}
-
-    local conn = self.tabBtn.MouseButton1Click:Connect(function()
+    self.scope:Connect(self.tabBtn.MouseButton1Click, function()
         window:SelectTab(self)
     end)
 
-    table.insert(window.conns, conn)
+    container.attach(self)
+    local destroy = self.Destroy
+    function self:Destroy(skipFrame)
+        local selected = window.currentTab == self
+        if selected then window.currentTab = nil end
+        destroy(self, skipFrame)
+        if selected and not window.destroyed and #window.tabs > 0 then
+            window:SelectTab(window.tabs[1])
+        end
+    end
     return self :: types.Tab
 end
 
 function m.NewSection(self: types.Tab, name: string, side: types.SectionSide?): types.Section
     local columnSide = side or "left"
-    local order = #self.columns[columnSide]:GetChildren()
+    self.nextOrder = (self.nextOrder or 0) + 1
+    local order = self.nextOrder
     local newSection = section.new(self, name, columnSide, order)
-    table.insert(self.sections, newSection)
+    table.insert(self.components, newSection)
+    self.sections = self.components
     return newSection
 end
 

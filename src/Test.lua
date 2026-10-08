@@ -69,3 +69,50 @@ local searchInput = searchRow:NewTextbox({ text = "Search...", fill = true }, se
 searchRow:NewButton({ text = "Search", width = 70 }, function()
     search(searchInput.button.Text)
 end)
+
+local debugTab = window:NewTab("debug")
+local tools = debugTab:NewSection("Search", "top")
+local eventSection = debugTab:NewSection("Events", "left")
+local argumentSection = debugTab:NewSection("Arguments", "right")
+local codeSection = debugTab:NewSection("Code", "right")
+local options = debugTab:NewSection("Options", "left")
+local logSection = debugTab:NewSection("Logs", "bottom")
+local events = eventSection:NewList({
+    height = 220,
+    columns = {
+        { key = "name", text = "name" },
+        { key = "count", text = "calls", width = 60 },
+    },
+})
+local arguments = argumentSection:NewTree({ height = 120, emptyText = "Select an event to inspect its arguments" })
+local code = codeSection:NewTextViewer({ height = 120, text = "select an event" })
+local searchRow = tools:NewRow()
+local filter = searchRow:NewTextbox({ text = "filter events" })
+searchRow:NewButton({ text = "Clear", width = 70 }, function() events:Clear() end)
+searchRow:NewButton({ text = "Sample", width = 70 }, function()
+    events:Append({ { id = "sample", values = { name = "sample event", count = 3 } } })
+end)
+filter:OnChanged(function(value) events:SetFilter(value) end)
+events:OnSelected(function(record)
+    if not record then arguments:Clear() code:SetText("select an event") return end
+    arguments:SetNodes({
+        { id = "args", text = "arguments", loadChildren = function()
+            return { { id = "value", text = "value = " .. record.values.count } }
+        end },
+    })
+    code:SetText("print(" .. string.format("%q", record.values.name) .. ")")
+end)
+local history = logSection:NewConsole({ height = 100, maxEntries = 100 })
+options:NewToggle({ text = "pause logs" }, function(value) history:SetPaused(value) end)
+options:NewDropdown({ text = "level", options = { "info", "warning", "error" }, value = "info" }, function(value)
+    history:NewEntry("level: " .. tostring(value), "info")
+end)
+options:NewMenu({ text = "actions", items = {
+    { text = "clear logs", callback = function() history:Clear() end },
+    { text = "sample log", callback = function() history:NewEntry("sample log", "info") end },
+} })
+events:SetRecords({
+    { id = "one", values = { name = "first event", count = 12 } },
+    { id = "two", values = { name = "second event", count = 4 } },
+})
+window:BindShortcut(Enum.KeyCode.F, function() filter:Focus() end, { ctrl = true })

@@ -2,86 +2,70 @@ local m = {}
 m.__index = m
 
 local types = require("../Types")
-local uiConstructor = require("../Util/UIConstructor")
+local controls = require("../util/Controls")
+local lifecycle = require("../util/Lifecycle")
 
-local function updateWidths(row: types.Row)
-    local fixedWidth = 0
-    local flexibleCount = 0
-    for _, width in row.componentWidths do
-        if width < 0 then
-            flexibleCount += 1
-        else
-            fixedWidth += width
+local function updateWidths(self)
+    local fixed = 0
+    local count = 0
+    local visible = 0
+    for i, component in self.components do
+        if component.frame.Visible then
+            visible += 1
+            local width = self.componentWidths[i]
+            if width < 0 then count += 1 else fixed += width end
         end
     end
-
-    local remaining = math.max(0, row.rowFrame.AbsoluteSize.X
-        - fixedWidth - math.max(0, #row.components - 1) * row.gap)
-    local flexibleWidth = if flexibleCount > 0 then remaining / flexibleCount else 0
-    for index, component in row.components do
-        local width = row.componentWidths[index]
-        component.button.Size = UDim2.fromOffset(if width < 0 then flexibleWidth else width, 28)
+    local remaining = math.max(0, self.rowFrame.AbsoluteSize.X - fixed - math.max(0, visible - 1) * self.gap)
+    for i, component in self.components do
+        local width = self.componentWidths[i]
+        component.frame.Size = UDim2.fromOffset(if width < 0 then (if count > 0 then remaining / count else 0) else width, 28)
     end
 end
 
-local function addComponent(row: types.Row, component: types.Button | types.Textbox, opts: types.RowComponentOpts)
-    table.insert(row.components, component)
-    table.insert(row.componentWidths, if opts.fill or opts.width == nil then -1 else math.max(0, opts.width))
-    component.button.LayoutOrder = #row.components
-    updateWidths(row)
+local function add(self, component, opts)
+    table.insert(self.components, component)
+    table.insert(self.componentWidths, if opts.fill or opts.width == nil then -1 else math.max(0, opts.width))
+    self.order = (self.order or 0) + 1
+    component.frame.LayoutOrder = self.order
+    component.scope:Connect(component.frame:GetPropertyChangedSignal("Visible"), function() updateWidths(self) end)
+    updateWidths(self)
+    return component
 end
 
-function m.new(parentSection: types.Section, opts: types.RowOpts?): types.Row
+function m.new(owner: types.Container, opts: types.RowOpts?): types.Row
     local options = opts or {}
-    local self = setmetatable({}, m)
-    self.parentSection = parentSection
-    self.components = {}
-    self.componentWidths = {}
-    self.gap = math.max(0, options.gap or 6)
-
     local frame = Instance.new("Frame")
     frame.Name = options.text or "Row"
     frame.BackgroundTransparency = 1
     frame.BorderSizePixel = 0
-    frame.ZIndex = parentSection.sectionFrame.ZIndex + 1
+    frame.ZIndex = owner.contentFrame.ZIndex + 1
     frame.Size = UDim2.new(1, 0, 0, 28)
-    frame.Parent = parentSection.contentFrame
+    frame.Parent = owner.contentFrame
+    local self = lifecycle.attach(setmetatable({}, m), frame, owner)
     self.rowFrame = frame
-
+    self.componentWidths = {}
+    self.gap = math.max(0, options.gap or 6)
     local layout = Instance.new("UIListLayout")
     layout.FillDirection = Enum.FillDirection.Horizontal
     layout.SortOrder = Enum.SortOrder.LayoutOrder
     layout.VerticalAlignment = Enum.VerticalAlignment.Center
     layout.Padding = UDim.new(0, self.gap)
     layout.Parent = frame
-
-    local conn = frame:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+    self.onRemove = function(index)
+        if index then table.remove(self.componentWidths, index) end
         updateWidths(self)
-    end)
-    table.insert(parentSection.parentTab.parentWindow.conns, conn)
-    return self :: types.Row
+    end
+    self.scope:Connect(frame:GetPropertyChangedSignal("AbsoluteSize"), function() updateWidths(self) end)
+    return self
 end
 
-function m:NewButton(opts: types.RowComponentOpts, callback: () -> (any)): types.Button
-    local gui = uiConstructor.createButton(self.rowFrame, opts)
-    local conn = gui.MouseButton1Click:Connect(callback)
-    table.insert(self.parentSection.parentTab.parentWindow.conns, conn)
-    local component: types.Button = { button = gui, callback = callback }
-    addComponent(self, component, opts)
-    return component
+function m:NewButton(opts: types.RowComponentOpts, callback): types.Button
+    return add(self, controls.button(self, opts, callback, self.rowFrame), opts)
 end
 
-function m:NewTextbox(opts: types.RowComponentOpts, callback: (string) -> (any)): types.Textbox
-    local gui = uiConstructor.createTextbox(self.rowFrame, opts)
-    local conn = gui.FocusLost:Connect(function(enterPressed: boolean)
-        if enterPressed then
-            callback(gui.Text)
-        end
-    end)
-    table.insert(self.parentSection.parentTab.parentWindow.conns, conn)
-    local component: types.Textbox = { button = gui, callback = callback }
-    addComponent(self, component, opts)
-    return component
+function m:NewTextbox(opts: types.RowComponentOpts, callback): types.Textbox
+    return add(self, controls.textbox(self, opts, callback, self.rowFrame), opts)
 end
 
 return m

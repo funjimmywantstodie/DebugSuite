@@ -3,7 +3,7 @@ local m = {}
 local colors = require("../Colors")
 local types = require("../Types")
 
-function m.createButton(parent: Frame, opts: types.ComponentOpts, zIndex: number?): TextButton
+function m.createButton(parent: GuiObject, opts: types.ComponentOpts, zIndex: number?): TextButton
     local button = Instance.new("TextButton")
     button.Name = opts.text
     button.BackgroundColor3 = colors.component
@@ -15,7 +15,7 @@ function m.createButton(parent: Frame, opts: types.ComponentOpts, zIndex: number
     return button
 end
 
-function m.createTextbox(parent: Frame, opts: types.ComponentOpts, zIndex: number?): TextBox
+function m.createTextbox(parent: GuiObject, opts: types.ComponentOpts, zIndex: number?): TextBox
     local textbox = Instance.new("TextBox")
     textbox.Name = opts.text
     textbox.BackgroundColor3 = colors.component

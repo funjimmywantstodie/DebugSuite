@@ -40,6 +40,27 @@ export type ComponentOpts = {
     text: string,
 }
 
+export type RowOpts = {
+    text: string?,
+    gap: number?,
+}
+
+export type RowComponentOpts = {
+    text: string,
+    width: number?, -- Pixels; omitted controls share the remaining width.
+    fill: boolean?, -- Explicitly share remaining width, overriding width.
+}
+
+export type Row = {
+    parentSection: Section,
+    rowFrame: Frame,
+    components: {Button | Textbox},
+    componentWidths: {number},
+    gap: number,
+    NewButton: (self: Row, opts: RowComponentOpts, callback: () -> (any)) -> Button,
+    NewTextbox: (self: Row, opts: RowComponentOpts, callback: (string) -> (any)) -> Textbox,
+}
+
 export type ConsoleOpts = {
     text: string,
     height: number?,
@@ -49,10 +70,11 @@ export type Section = {
     parentTab: Tab,
     sectionFrame: Frame,
     contentFrame: Frame,
-    components: {Button | Textbox | Console},
+    components: {Button | Textbox | Console | Row},
     NewButton: (self: Section, opts: ComponentOpts, callback: () -> (any)) -> Button,
     NewTextbox: (self: Section, opts: ComponentOpts, callback: (string) -> (any)) -> Textbox,
     NewConsole: (self: Section, opts: ConsoleOpts) -> Console,
+    NewRow: (self: Section, opts: RowOpts?) -> Row,
 }
 
 export type Console = {

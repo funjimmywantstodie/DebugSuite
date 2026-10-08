@@ -7,6 +7,7 @@ local types = require("./Types")
 local button = require("./Components/Button")
 local textbox =require("./Components/Textbox")
 local console = require("./Components/Console")
+local row = require("./Components/Row")
 
 local function updateHeight(frame: Frame, uiListLayout: UIListLayout, uiPadding: UIPadding)
     local height = 24--header height
@@ -111,6 +112,14 @@ function m:NewConsole(opts: types.ConsoleOpts): types.Console
 
     table.insert(self.components, console)
     return console
+end
+
+function m:NewRow(opts: types.RowOpts?): types.Row
+    local row = row.new(self, opts)
+    row.rowFrame.LayoutOrder = #self.contentFrame:GetChildren()
+
+    table.insert(self.components, row)
+    return row
 end
 
 return m

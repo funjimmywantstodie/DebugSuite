@@ -28,10 +28,10 @@ type Window__DARKLUA_TYPE_e = {
 type Tab__DARKLUA_TYPE_f = {
     parentWindow: Window__DARKLUA_TYPE_e,
     tabBtn: TextButton,
-    sections: {Section__DARKLUA_TYPE_i},
+    sections: {Section__DARKLUA_TYPE_l},
     container: ScrollingFrame,
     columns: {left: Frame, right: Frame, top: Frame, bottom: Frame, full: Frame},
-    NewSection: (self: Tab__DARKLUA_TYPE_f, name: string, side: SectionSide__DARKLUA_TYPE_d?) -> Section__DARKLUA_TYPE_i,
+    NewSection: (self: Tab__DARKLUA_TYPE_f, name: string, side: SectionSide__DARKLUA_TYPE_d?) -> Section__DARKLUA_TYPE_l,
     ShowCurrentTab: (self: Tab__DARKLUA_TYPE_f) -> (),
     HideCurrentTab: (self: Tab__DARKLUA_TYPE_f) -> (),
 }
@@ -40,34 +40,56 @@ type ComponentOpts__DARKLUA_TYPE_g = {
     text: string,
 }
 
-type ConsoleOpts__DARKLUA_TYPE_h = {
+type RowOpts__DARKLUA_TYPE_h = {
+    text: string?,
+    gap: number?,
+}
+
+type RowComponentOpts__DARKLUA_TYPE_i = {
+    text: string,
+    width: number?, -- Pixels; omitted controls share the remaining width.
+    fill: boolean?, -- Explicitly share remaining width, overriding width.
+}
+
+type Row__DARKLUA_TYPE_j = {
+    parentSection: Section__DARKLUA_TYPE_l,
+    rowFrame: Frame,
+    components: {Button__DARKLUA_TYPE_o | Textbox__DARKLUA_TYPE_p},
+    componentWidths: {number},
+    gap: number,
+    NewButton: (self: Row__DARKLUA_TYPE_j, opts: RowComponentOpts__DARKLUA_TYPE_i, callback: () -> (any)) -> Button__DARKLUA_TYPE_o,
+    NewTextbox: (self: Row__DARKLUA_TYPE_j, opts: RowComponentOpts__DARKLUA_TYPE_i, callback: (string) -> (any)) -> Textbox__DARKLUA_TYPE_p,
+}
+
+type ConsoleOpts__DARKLUA_TYPE_k = {
     text: string,
     height: number?,
 }
 
-type Section__DARKLUA_TYPE_i = {
+type Section__DARKLUA_TYPE_l = {
     parentTab: Tab__DARKLUA_TYPE_f,
     sectionFrame: Frame,
     contentFrame: Frame,
-    components: {Button__DARKLUA_TYPE_l | Textbox__DARKLUA_TYPE_m | Console__DARKLUA_TYPE_j},
-    NewButton: (self: Section__DARKLUA_TYPE_i, opts: ComponentOpts__DARKLUA_TYPE_g, callback: () -> (any)) -> Button__DARKLUA_TYPE_l,
-    NewTextbox: (self: Section__DARKLUA_TYPE_i, opts: ComponentOpts__DARKLUA_TYPE_g, callback: (string) -> (any)) -> Textbox__DARKLUA_TYPE_m,
-    NewConsole: (self: Section__DARKLUA_TYPE_i, opts: ConsoleOpts__DARKLUA_TYPE_h) -> Console__DARKLUA_TYPE_j,
+    components: {Button__DARKLUA_TYPE_o | Textbox__DARKLUA_TYPE_p | Console__DARKLUA_TYPE_m | Row__DARKLUA_TYPE_j},
+    NewButton: (self: Section__DARKLUA_TYPE_l, opts: ComponentOpts__DARKLUA_TYPE_g, callback: () -> (any)) -> Button__DARKLUA_TYPE_o,
+    NewTextbox: (self: Section__DARKLUA_TYPE_l, opts: ComponentOpts__DARKLUA_TYPE_g, callback: (string) -> (any)) -> Textbox__DARKLUA_TYPE_p,
+    NewConsole: (self: Section__DARKLUA_TYPE_l, opts: ConsoleOpts__DARKLUA_TYPE_k) -> Console__DARKLUA_TYPE_m,
+    NewRow: (self: Section__DARKLUA_TYPE_l, opts: RowOpts__DARKLUA_TYPE_h?) -> Row__DARKLUA_TYPE_j,
 }
 
-type Console__DARKLUA_TYPE_j = {
+type Console__DARKLUA_TYPE_m = {
     consoleFrame: Frame,
-    NewEntry: (self: Console__DARKLUA_TYPE_j, text: string, messageType: ConsoleMessageType__DARKLUA_TYPE_k) -> (),
+    NewEntry: (self: Console__DARKLUA_TYPE_m, text: string, messageType: ConsoleMessageType__DARKLUA_TYPE_n) -> (),
 }
 
-type ConsoleMessageType__DARKLUA_TYPE_k = "error" | "warning" | "info" | "success"
+type ConsoleMessageType__DARKLUA_TYPE_n = "error" | "warning" | "info" | "success"
 
-type Button__DARKLUA_TYPE_l = {
+type Button__DARKLUA_TYPE_o = {
     button: TextButton,
     callback: () -> (any),
 }
 
-type Textbox__DARKLUA_TYPE_m = {
+type Textbox__DARKLUA_TYPE_p = {
     button: TextBox,
     callback: (string) -> (any),
 }
@@ -165,77 +187,104 @@ end function __DARKLUA_BUNDLE_MODULES.a():typeof(__modImpl())local v=__DARKLUA_B
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 return {}
 end function __DARKLUA_BUNDLE_MODULES.b():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.b if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.b=v end return v.c end end do local function __modImpl()
 local m = {}
-m.__index = m
 
 local colors = __DARKLUA_BUNDLE_MODULES.a()
-
 local types = __DARKLUA_BUNDLE_MODULES.b()
 
-local function createButton(section: Section__DARKLUA_TYPE_i, opts: ComponentOpts__DARKLUA_TYPE_g, callback: () -> (any)): TextButton
+function m.createButton(parent: Frame, opts: ComponentOpts__DARKLUA_TYPE_g, zIndex: number?): TextButton
     local button = Instance.new("TextButton")
     button.Name = opts.text
     button.BackgroundColor3 = colors.component
     button.TextColor3 = colors.text
     button.Text = opts.text
-    button.ZIndex = section.sectionFrame.ZIndex + 1
-    button.Parent = section.contentFrame
+    button.ZIndex = zIndex or parent.ZIndex + 1
     button.Size = UDim2.new(1, 0, 0, 28)
-
-    local conn = button.MouseButton1Click:Connect(callback)
-    table.insert(section.parentTab.parentWindow.conns, conn)
+    button.Parent = parent
     return button
-    
 end
 
-function m.new(parentSection: Section__DARKLUA_TYPE_i, opts: ComponentOpts__DARKLUA_TYPE_g, callback: () -> (any)): Button__DARKLUA_TYPE_l    
-local self = setmetatable({}, m)
-
-    self.button = createButton(parentSection, opts, callback)
-    self.callback = callback
-    return self
+function m.createTextbox(parent: Frame, opts: ComponentOpts__DARKLUA_TYPE_g, zIndex: number?): TextBox
+    local textbox = Instance.new("TextBox")
+    textbox.Name = opts.text
+    textbox.BackgroundColor3 = colors.component
+    textbox.TextColor3 = colors.text
+    textbox.PlaceholderText = opts.text
+    textbox.Text = ""
+    textbox.ZIndex = zIndex or parent.ZIndex + 1
+    textbox.Size = UDim2.new(1, 0, 0, 28)
+    textbox.Parent = parent
+    return textbox
 end
 
-return m end function __DARKLUA_BUNDLE_MODULES.c():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.c if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.c=v end return v.c end end do local function __modImpl()
+return m
+end function __DARKLUA_BUNDLE_MODULES.c():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.c if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.c=v end return v.c end end do local function __modImpl()
 local m = {}
 m.__index = m
 
-local colors = __DARKLUA_BUNDLE_MODULES.a()
+local types = __DARKLUA_BUNDLE_MODULES.b()
+local uiConstructor = __DARKLUA_BUNDLE_MODULES.c()
+
+function m.new(parentSection: Section__DARKLUA_TYPE_l, opts: ComponentOpts__DARKLUA_TYPE_g, callback: () -> (any), parent: Frame?): Button__DARKLUA_TYPE_o    
+local self = setmetatable({}, m)
+    self.button = uiConstructor.createButton(parent or parentSection.contentFrame, opts,
+        (parent or parentSection.sectionFrame).ZIndex + 1)
+    self.callback = callback
+
+    local conn = self.button.MouseButton1Click:Connect(callback)
+    table.insert(parentSection.parentTab.parentWindow.conns, conn)
+    return self
+end
+
+return m
+end function __DARKLUA_BUNDLE_MODULES.d():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.d if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.d=v end return v.c end end do local function __modImpl()
+local m = {}
+m.__index = m
 
 local types = __DARKLUA_BUNDLE_MODULES.b()
+local uiConstructor = __DARKLUA_BUNDLE_MODULES.c()
 
-local function createTextbox(section: Section__DARKLUA_TYPE_i, opts: ComponentOpts__DARKLUA_TYPE_g, callback: (string) -> (any)): TextBox
-    local button = Instance.new("TextBox")
-    button.Name = opts.text
-    button.BackgroundColor3 = colors.component
-    button.TextColor3 = colors.text
-    button.PlaceholderText = opts.text
-    button.Text = ""
-    button.ZIndex = section.sectionFrame.ZIndex + 1
-    button.Parent = section.contentFrame
-    button.Size = UDim2.new(1, 0, 0, 28)
+function m.new(parentSection: Section__DARKLUA_TYPE_l, opts: ComponentOpts__DARKLUA_TYPE_g, callback: (string) -> (any), parent: Frame?): Textbox__DARKLUA_TYPE_p    
+local self = setmetatable({}, m)
+    self.button = uiConstructor.createTextbox(parent or parentSection.contentFrame, opts,
+        (parent or parentSection.sectionFrame).ZIndex + 1)
+    self.callback = callback
 
-   local conn = button.FocusLost:Connect(function(enterPressed: boolean)
+    local conn = self.button.FocusLost:Connect(function(enterPressed: boolean)
         if enterPressed then
-            callback(button.Text)
+            callback(self.button.Text)
         end
     end)
-    table.insert(section.parentTab.parentWindow.conns, conn)
-    return button
-    
-end
-
-function m.new(parentSection: Section__DARKLUA_TYPE_i, opts: ComponentOpts__DARKLUA_TYPE_g, callback: (string) -> (any)): Textbox__DARKLUA_TYPE_m    
-local self = setmetatable({}, m)
-
-    self.button = createTextbox(parentSection, opts, callback)
-    self.callback = callback
+    table.insert(parentSection.parentTab.parentWindow.conns, conn)
     return self
 end
 
-return m end function __DARKLUA_BUNDLE_MODULES.d():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.d if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.d=v end return v.c end end do local function __modImpl()
+return m
+end function __DARKLUA_BUNDLE_MODULES.e():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.e if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.e=v end return v.c end end do local function __modImpl()
 local m = {}
 m.__index = m
 
@@ -243,7 +292,7 @@ local colors = __DARKLUA_BUNDLE_MODULES.a()
 
 local types = __DARKLUA_BUNDLE_MODULES.b()
 
-local function updateSize(section: Section__DARKLUA_TYPE_i, consoleFrame: Frame, height: number?): ()
+local function updateSize(section: Section__DARKLUA_TYPE_l, consoleFrame: Frame, height: number?): ()
     local width = section.contentFrame.AbsoluteSize.X
     local padding = section.contentFrame:FindFirstChildOfClass("UIPadding")
     if padding then
@@ -258,7 +307,7 @@ local function updateSize(section: Section__DARKLUA_TYPE_i, consoleFrame: Frame,
 end
 
 
-local function createConsole(section: Section__DARKLUA_TYPE_i, opts: ConsoleOpts__DARKLUA_TYPE_h): Frame
+local function createConsole(section: Section__DARKLUA_TYPE_l, opts: ConsoleOpts__DARKLUA_TYPE_k): Frame
     local consoleFrame = Instance.new("Frame")
     consoleFrame.Name = "Console"
     consoleFrame.BackgroundColor3 = colors.console.background
@@ -279,14 +328,14 @@ local function createConsole(section: Section__DARKLUA_TYPE_i, opts: ConsoleOpts
     return consoleFrame
 end
 
-function m.new(parentSection: Section__DARKLUA_TYPE_i, opts: ConsoleOpts__DARKLUA_TYPE_h): Console__DARKLUA_TYPE_j    
+function m.new(parentSection: Section__DARKLUA_TYPE_l, opts: ConsoleOpts__DARKLUA_TYPE_k): Console__DARKLUA_TYPE_m    
 local self = setmetatable({}, m)
 
     self.consoleFrame = createConsole(parentSection, opts)
     return self
 end
 
-function m.NewEntry(self: Console__DARKLUA_TYPE_j, text: string, messageType: ConsoleMessageType__DARKLUA_TYPE_k): ()
+function m.NewEntry(self: Console__DARKLUA_TYPE_m, text: string, messageType: ConsoleMessageType__DARKLUA_TYPE_n): ()
     local entry = Instance.new("TextLabel")
     entry.Name = "Entry"
     entry.BackgroundTransparency = 1
@@ -305,16 +354,105 @@ function m.NewEntry(self: Console__DARKLUA_TYPE_j, text: string, messageType: Co
 end
 
 return m
-end function __DARKLUA_BUNDLE_MODULES.e():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.e if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.e=v end return v.c end end do local function __modImpl()
+end function __DARKLUA_BUNDLE_MODULES.f():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.f if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.f=v end return v.c end end do local function __modImpl()
+local m = {}
+m.__index = m
+
+local types = __DARKLUA_BUNDLE_MODULES.b()
+local uiConstructor = __DARKLUA_BUNDLE_MODULES.c()
+
+local function updateWidths(row: Row__DARKLUA_TYPE_j)
+    local fixedWidth = 0
+    local flexibleCount = 0
+    for _, width in row.componentWidths do
+        if width < 0 then
+            flexibleCount += 1
+        else
+            fixedWidth += width
+        end
+    end
+
+    local remaining = math.max(0, row.rowFrame.AbsoluteSize.X
+        - fixedWidth - math.max(0, #row.components - 1) * row.gap)
+    local flexibleWidth = if flexibleCount > 0 then remaining / flexibleCount else 0
+    for index, component in row.components do
+        local width = row.componentWidths[index]
+        component.button.Size = UDim2.fromOffset(if width < 0 then flexibleWidth else width, 28)
+    end
+end
+
+local function addComponent(row: Row__DARKLUA_TYPE_j, component: Button__DARKLUA_TYPE_o| Textbox__DARKLUA_TYPE_p, opts: RowComponentOpts__DARKLUA_TYPE_i)
+    table.insert(row.components, component)
+    table.insert(row.componentWidths, if opts.fill or opts.width == nil then -1 else math.max(0, opts.width))
+    component.button.LayoutOrder = #row.components
+    updateWidths(row)
+end
+
+function m.new(parentSection: Section__DARKLUA_TYPE_l, opts: RowOpts__DARKLUA_TYPE_h?): Row__DARKLUA_TYPE_j    
+local options = opts or {}
+    local self = setmetatable({}, m)
+    self.parentSection = parentSection
+    self.components = {}
+    self.componentWidths = {}
+    self.gap = math.max(0, options.gap or 6)
+
+    local frame = Instance.new("Frame")
+    frame.Name = options.text or "Row"
+    frame.BackgroundTransparency = 1
+    frame.BorderSizePixel = 0
+    frame.ZIndex = parentSection.sectionFrame.ZIndex + 1
+    frame.Size = UDim2.new(1, 0, 0, 28)
+    frame.Parent = parentSection.contentFrame
+    self.rowFrame = frame
+
+    local layout = Instance.new("UIListLayout")
+    layout.FillDirection = Enum.FillDirection.Horizontal
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.VerticalAlignment = Enum.VerticalAlignment.Center
+    layout.Padding = UDim.new(0, self.gap)
+    layout.Parent = frame
+
+    local conn = frame:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+        updateWidths(self)
+    end)
+    table.insert(parentSection.parentTab.parentWindow.conns, conn)
+    return self :: Row__DARKLUA_TYPE_j
+end
+
+function m:NewButton(opts: RowComponentOpts__DARKLUA_TYPE_i, callback: () -> (any)): Button__DARKLUA_TYPE_o    
+local gui = uiConstructor.createButton(self.rowFrame, opts)
+    local conn = gui.MouseButton1Click:Connect(callback)
+    table.insert(self.parentSection.parentTab.parentWindow.conns, conn)
+    local component: Button__DARKLUA_TYPE_o= { button = gui, callback = callback }
+    addComponent(self, component, opts)
+    return component
+end
+
+function m:NewTextbox(opts: RowComponentOpts__DARKLUA_TYPE_i, callback: (string) -> (any)): Textbox__DARKLUA_TYPE_p    
+local gui = uiConstructor.createTextbox(self.rowFrame, opts)
+    local conn = gui.FocusLost:Connect(function(enterPressed: boolean)
+        if enterPressed then
+            callback(gui.Text)
+        end
+    end)
+    table.insert(self.parentSection.parentTab.parentWindow.conns, conn)
+    local component: Textbox__DARKLUA_TYPE_p= { button = gui, callback = callback }
+    addComponent(self, component, opts)
+    return component
+end
+
+return m
+end function __DARKLUA_BUNDLE_MODULES.g():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.g if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.g=v end return v.c end end do local function __modImpl()
 local m = {}
 m.__index = m
 
 local colors = __DARKLUA_BUNDLE_MODULES.a()
 
 local types = __DARKLUA_BUNDLE_MODULES.b()
-local button = __DARKLUA_BUNDLE_MODULES.c()
-local textbox =__DARKLUA_BUNDLE_MODULES.d()
-local console = __DARKLUA_BUNDLE_MODULES.e()
+local button = __DARKLUA_BUNDLE_MODULES.d()
+local textbox =__DARKLUA_BUNDLE_MODULES.e()
+local console = __DARKLUA_BUNDLE_MODULES.f()
+local row = __DARKLUA_BUNDLE_MODULES.g()
 
 local function updateHeight(frame: Frame, uiListLayout: UIListLayout, uiPadding: UIPadding)
     local height = 24--header height
@@ -386,7 +524,7 @@ local function createSection(tab: Tab__DARKLUA_TYPE_f, name: string, side: Secti
     }
 end
 
-function m.new(tab: Tab__DARKLUA_TYPE_f, name: string, side: SectionSide__DARKLUA_TYPE_d, order: number): Section__DARKLUA_TYPE_i    
+function m.new(tab: Tab__DARKLUA_TYPE_f, name: string, side: SectionSide__DARKLUA_TYPE_d, order: number): Section__DARKLUA_TYPE_l    
 local self = setmetatable({}, m)
     local result = createSection(tab, name, side, order)
     self.sectionFrame = result.sectionFrame
@@ -394,10 +532,10 @@ local self = setmetatable({}, m)
     self.components = result.components
     self.parentTab = tab
     
-    return self :: Section__DARKLUA_TYPE_i
+    return self :: Section__DARKLUA_TYPE_l
 end
 
-function m:NewButton(opts: ComponentOpts__DARKLUA_TYPE_g, callback: () -> (any)): Button__DARKLUA_TYPE_l    
+function m:NewButton(opts: ComponentOpts__DARKLUA_TYPE_g, callback: () -> (any)): Button__DARKLUA_TYPE_o    
 local btn = button.new(self, opts, callback)
     btn.button.LayoutOrder = #self.contentFrame:GetChildren()
 
@@ -405,7 +543,7 @@ local btn = button.new(self, opts, callback)
     return btn
 end
 
-function m:NewTextbox(opts: ComponentOpts__DARKLUA_TYPE_g, callback: (string) -> (any)): Textbox__DARKLUA_TYPE_m    
+function m:NewTextbox(opts: ComponentOpts__DARKLUA_TYPE_g, callback: (string) -> (any)): Textbox__DARKLUA_TYPE_p    
 local textbox = textbox.new(self, opts, callback)
     textbox.button.LayoutOrder = #self.contentFrame:GetChildren()
 
@@ -413,7 +551,7 @@ local textbox = textbox.new(self, opts, callback)
     return textbox
 end
 
-function m:NewConsole(opts: ConsoleOpts__DARKLUA_TYPE_h): Console__DARKLUA_TYPE_j    
+function m:NewConsole(opts: ConsoleOpts__DARKLUA_TYPE_k): Console__DARKLUA_TYPE_m    
 local console = console.new(self, opts)
     console.consoleFrame.LayoutOrder = #self.contentFrame:GetChildren()
 
@@ -421,15 +559,23 @@ local console = console.new(self, opts)
     return console
 end
 
+function m:NewRow(opts: RowOpts__DARKLUA_TYPE_h?): Row__DARKLUA_TYPE_j    
+local row = row.new(self, opts)
+    row.rowFrame.LayoutOrder = #self.contentFrame:GetChildren()
+
+    table.insert(self.components, row)
+    return row
+end
+
 return m
-end function __DARKLUA_BUNDLE_MODULES.f():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.f if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.f=v end return v.c end end do local function __modImpl()
+end function __DARKLUA_BUNDLE_MODULES.h():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.h if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.h=v end return v.c end end do local function __modImpl()
 local m = {}
 m.__index = m
 
 local colors = __DARKLUA_BUNDLE_MODULES.a()
 
 local types = __DARKLUA_BUNDLE_MODULES.b()
-local section = __DARKLUA_BUNDLE_MODULES.f()
+local section = __DARKLUA_BUNDLE_MODULES.h()
 
 local function createTabBar(root: Frame, name: string): TextButton
     local tabBtn = Instance.new("TextButton")
@@ -522,7 +668,7 @@ local self = setmetatable({}, m)
         bottom = bottom,
         full = bottom,
     }
-    self.sections = {} :: {Section__DARKLUA_TYPE_i}
+    self.sections = {} :: {Section__DARKLUA_TYPE_l}
 
     local conn = self.tabBtn.MouseButton1Click:Connect(function()
         window:SelectTab(self)
@@ -532,7 +678,7 @@ local self = setmetatable({}, m)
     return self :: Tab__DARKLUA_TYPE_f
 end
 
-function m.NewSection(self: Tab__DARKLUA_TYPE_f, name: string, side: SectionSide__DARKLUA_TYPE_d?): Section__DARKLUA_TYPE_i    
+function m.NewSection(self: Tab__DARKLUA_TYPE_f, name: string, side: SectionSide__DARKLUA_TYPE_d?): Section__DARKLUA_TYPE_l    
 local columnSide = side or "left"
     local order = #self.columns[columnSide]:GetChildren()
     local newSection = section.new(self, name, columnSide, order)
@@ -549,7 +695,7 @@ function m.HideCurrentTab(self: Tab__DARKLUA_TYPE_f): ()
 end
 
 return m
-end function __DARKLUA_BUNDLE_MODULES.g():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.g if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.g=v end return v.c end end do local function __modImpl()
+end function __DARKLUA_BUNDLE_MODULES.i():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.i if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.i=v end return v.c end end do local function __modImpl()
 local m = {}
 m.__index = m
 
@@ -558,7 +704,7 @@ m.__index = m
 local colors = __DARKLUA_BUNDLE_MODULES.a()
 
 local types = __DARKLUA_BUNDLE_MODULES.b()
-local tab = __DARKLUA_BUNDLE_MODULES.g()
+local tab = __DARKLUA_BUNDLE_MODULES.i()
 
 local conns = {} :: {RBXScriptConnection}
 
@@ -730,9 +876,9 @@ function m.SelectTab(self: Window__DARKLUA_TYPE_e, tab: Tab__DARKLUA_TYPE_f): ()
     tab:ShowCurrentTab()
 end
 
-return m end function __DARKLUA_BUNDLE_MODULES.h():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.h if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.h=v end return v.c end end end
-local Window = __DARKLUA_BUNDLE_MODULES.h()
-local tab = __DARKLUA_BUNDLE_MODULES.g()
+return m end function __DARKLUA_BUNDLE_MODULES.j():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.j if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.j=v end return v.c end end end
+local Window = __DARKLUA_BUNDLE_MODULES.j()
+local tab = __DARKLUA_BUNDLE_MODULES.i()
 
 local window = Window.new({})
 local testTab = window:NewTab("test")
@@ -783,6 +929,22 @@ testTab2:NewSection("h", "right")
 testSection9:NewButton({ text = "test button5" }, function()
     print("test button5 clicked")
 end)
+local testRow = testSection9:NewRow({ text = "test row" })
+testRow:NewButton({ text = "test row button", width = 120 }, function()
+    print("test row button clicked")
+end)
+testRow:NewTextbox({ text = "test row textbox" }, function(value)
+    print("test row textbox value: " .. value)
+end)
 
 window:SelectTab(testTab)
 window:Show()
+
+local searchRow = topSection:NewRow({ text = "Search", gap = 6 })
+local function search(value: string)
+    print("search: " .. value)
+end
+local searchInput = searchRow:NewTextbox({ text = "Search...", fill = true }, search)
+searchRow:NewButton({ text = "Search", width = 70 }, function()
+    search(searchInput.button.Text)
+end)

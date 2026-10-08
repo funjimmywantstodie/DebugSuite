@@ -83,7 +83,7 @@ local instanceMt = {
     __index = function(self, key)
         if methods[key] then return methods[key] end
         if self.props[key] ~= nil then return self.props[key] end
-        if table.find({ "MouseButton1Click", "FocusLost", "InputBegan", "DragStart", "DragContinue", "Destroying" }, key) then
+        if table.find({ "MouseButton1Click", "Focused", "FocusLost", "InputBegan", "DragStart", "DragContinue", "Destroying" }, key) then
             return self:GetPropertyChangedSignal(key)
         end
     end,

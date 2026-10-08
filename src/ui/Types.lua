@@ -32,7 +32,13 @@ export type SplitPaneOpts = {
 }
 export type ConsoleMessageType = "error" | "warning" | "info" | "success"
 export type ConsoleEntry = { text: string, messageType: ConsoleMessageType? }
-export type ConsoleOpts = { text: string?, height: number?, maxEntries: number?, autoScroll: boolean? }
+export type Syntax = "lua" | "luau" | false
+export type SyntaxTheme = {[string]: string}
+export type SyntaxToken = { kind: string, text: string, start: number, finish: number }
+export type ConsoleOpts = {
+    text: string?, height: number?, maxEntries: number?, autoScroll: boolean?,
+    syntax: Syntax?, syntaxTheme: SyntaxTheme?,
+}
 export type Record = { id: string | number, values: {[string]: any}, data: any? }
 export type Column = { key: string, text: string?, width: number? }
 export type ListOpts = {
@@ -44,7 +50,10 @@ export type TreeNode = {
     loadChildren: (() -> {TreeNode})?,
 }
 export type TreeOpts = { text: string?, size: UDim2?, height: number?, maxDepth: number?, emptyText: string? }
-export type TextViewerOpts = { text: string?, size: UDim2?, height: number?, editable: boolean? }
+export type TextViewerOpts = {
+    text: string?, size: UDim2?, height: number?, editable: boolean?,
+    syntax: Syntax?, syntaxTheme: SyntaxTheme?,
+}
 export type ToggleOpts = { text: string, value: boolean? }
 export type DropdownOpts = { text: string, options: {string}, value: string? }
 export type MenuItem = { text: string, callback: () -> (), enabled: boolean? }
@@ -121,6 +130,7 @@ export type TextViewer = Component & {
     textbox: TextBox,
     SetText: (self: TextViewer, value: string) -> (),
     GetText: (self: TextViewer) -> string,
+    SetSyntax: (self: TextViewer, value: Syntax?) -> (),
     OnChanged: (self: TextViewer, callback: (string) -> ()) -> RBXScriptConnection,
 }
 export type Toggle = Button & {

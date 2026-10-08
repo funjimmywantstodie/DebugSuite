@@ -42,159 +42,172 @@ type ConsoleMessageType__DARKLUA_TYPE_k = "error" | "warning" | "info" | "succes
 
 type ConsoleEntry__DARKLUA_TYPE_l = { text: string, messageType: ConsoleMessageType__DARKLUA_TYPE_k? }
 
-type ConsoleOpts__DARKLUA_TYPE_m = { text: string?, height: number?, maxEntries: number?, autoScroll: boolean? }
+type Syntax__DARKLUA_TYPE_m = "lua" | "luau" | false
 
-type Record__DARKLUA_TYPE_n = { id: string | number, values: {[string]: any}, data: any? }
+type SyntaxTheme__DARKLUA_TYPE_n = {[string]: string}
 
-type Column__DARKLUA_TYPE_o = { key: string, text: string?, width: number? }
+type SyntaxToken__DARKLUA_TYPE_o = { kind: string, text: string, start: number, finish: number }
 
-type ListOpts__DARKLUA_TYPE_p = {
-    text: string?, size: UDim2?, height: number?, columns: {Column__DARKLUA_TYPE_o}?,
+type ConsoleOpts__DARKLUA_TYPE_p = {
+    text: string?, height: number?, maxEntries: number?, autoScroll: boolean?,
+    syntax: Syntax__DARKLUA_TYPE_m?, syntaxTheme: SyntaxTheme__DARKLUA_TYPE_n?,
+}
+
+type Record__DARKLUA_TYPE_q = { id: string | number, values: {[string]: any}, data: any? }
+
+type Column__DARKLUA_TYPE_r = { key: string, text: string?, width: number? }
+
+type ListOpts__DARKLUA_TYPE_s = {
+    text: string?, size: UDim2?, height: number?, columns: {Column__DARKLUA_TYPE_r}?,
     rowHeight: number?, maxRecords: number?,
 }
 
-type TreeNode__DARKLUA_TYPE_q = {
-    id: string | number, text: string, data: any?, children: {TreeNode__DARKLUA_TYPE_q}?,
-    loadChildren: (() -> {TreeNode__DARKLUA_TYPE_q})?,
+type TreeNode__DARKLUA_TYPE_t = {
+    id: string | number, text: string, data: any?, children: {TreeNode__DARKLUA_TYPE_t}?,
+    loadChildren: (() -> {TreeNode__DARKLUA_TYPE_t})?,
 }
 
-type TreeOpts__DARKLUA_TYPE_r = { text: string?, size: UDim2?, height: number?, maxDepth: number?, emptyText: string? }
+type TreeOpts__DARKLUA_TYPE_u = { text: string?, size: UDim2?, height: number?, maxDepth: number?, emptyText: string? }
 
-type TextViewerOpts__DARKLUA_TYPE_s = { text: string?, size: UDim2?, height: number?, editable: boolean? }
+type TextViewerOpts__DARKLUA_TYPE_v = {
+    text: string?, size: UDim2?, height: number?, editable: boolean?,
+    syntax: Syntax__DARKLUA_TYPE_m?, syntaxTheme: SyntaxTheme__DARKLUA_TYPE_n?,
+}
 
-type ToggleOpts__DARKLUA_TYPE_t = { text: string, value: boolean? }
+type ToggleOpts__DARKLUA_TYPE_w = { text: string, value: boolean? }
 
-type DropdownOpts__DARKLUA_TYPE_u = { text: string, options: {string}, value: string? }
+type DropdownOpts__DARKLUA_TYPE_x = { text: string, options: {string}, value: string? }
 
-type MenuItem__DARKLUA_TYPE_v = { text: string, callback: () -> (), enabled: boolean? }
+type MenuItem__DARKLUA_TYPE_y = { text: string, callback: () -> (), enabled: boolean? }
 
-type MenuOpts__DARKLUA_TYPE_w = { text: string, items: {MenuItem__DARKLUA_TYPE_v} }
+type MenuOpts__DARKLUA_TYPE_z = { text: string, items: {MenuItem__DARKLUA_TYPE_y} }
 
-type Container__DARKLUA_TYPE_x = Component__DARKLUA_TYPE_e & {
+type Container__DARKLUA_TYPE_A = Component__DARKLUA_TYPE_e & {
     contentFrame: GuiObject,
-    NewButton: (self: any, opts: ComponentOpts__DARKLUA_TYPE_f, callback: (() -> any)?) -> Button__DARKLUA_TYPE_y,
-    NewTextbox: (self: any, opts: ComponentOpts__DARKLUA_TYPE_f, callback: ((string) -> any)?) -> Textbox__DARKLUA_TYPE_z,
-    NewRow: (self: any, opts: RowOpts__DARKLUA_TYPE_g?) -> Row__DARKLUA_TYPE_A,
-    NewConsole: (self: any, opts: ConsoleOpts__DARKLUA_TYPE_m?) -> Console__DARKLUA_TYPE_C,
-    NewPanel: (self: any, opts: PanelOpts__DARKLUA_TYPE_i?) -> Container__DARKLUA_TYPE_x,
-    NewSplitPane: (self: any, opts: SplitPaneOpts__DARKLUA_TYPE_j?) -> SplitPane__DARKLUA_TYPE_B,
-    NewList: (self: any, opts: ListOpts__DARKLUA_TYPE_p?) -> List__DARKLUA_TYPE_D,
-    NewTree: (self: any, opts: TreeOpts__DARKLUA_TYPE_r?) -> Tree__DARKLUA_TYPE_E,
-    NewTextViewer: (self: any, opts: TextViewerOpts__DARKLUA_TYPE_s?) -> TextViewer__DARKLUA_TYPE_F,
-    NewToggle: (self: any, opts: ToggleOpts__DARKLUA_TYPE_t, callback: ((boolean) -> ())?) -> Toggle__DARKLUA_TYPE_G,
-    NewDropdown: (self: any, opts: DropdownOpts__DARKLUA_TYPE_u, callback: ((string?) -> ())?) -> Dropdown__DARKLUA_TYPE_H,
-    NewMenu: (self: any, opts: MenuOpts__DARKLUA_TYPE_w) -> Menu__DARKLUA_TYPE_I,
+    NewButton: (self: any, opts: ComponentOpts__DARKLUA_TYPE_f, callback: (() -> any)?) -> Button__DARKLUA_TYPE_B,
+    NewTextbox: (self: any, opts: ComponentOpts__DARKLUA_TYPE_f, callback: ((string) -> any)?) -> Textbox__DARKLUA_TYPE_C,
+    NewRow: (self: any, opts: RowOpts__DARKLUA_TYPE_g?) -> Row__DARKLUA_TYPE_D,
+    NewConsole: (self: any, opts: ConsoleOpts__DARKLUA_TYPE_p?) -> Console__DARKLUA_TYPE_F,
+    NewPanel: (self: any, opts: PanelOpts__DARKLUA_TYPE_i?) -> Container__DARKLUA_TYPE_A,
+    NewSplitPane: (self: any, opts: SplitPaneOpts__DARKLUA_TYPE_j?) -> SplitPane__DARKLUA_TYPE_E,
+    NewList: (self: any, opts: ListOpts__DARKLUA_TYPE_s?) -> List__DARKLUA_TYPE_G,
+    NewTree: (self: any, opts: TreeOpts__DARKLUA_TYPE_u?) -> Tree__DARKLUA_TYPE_H,
+    NewTextViewer: (self: any, opts: TextViewerOpts__DARKLUA_TYPE_v?) -> TextViewer__DARKLUA_TYPE_I,
+    NewToggle: (self: any, opts: ToggleOpts__DARKLUA_TYPE_w, callback: ((boolean) -> ())?) -> Toggle__DARKLUA_TYPE_J,
+    NewDropdown: (self: any, opts: DropdownOpts__DARKLUA_TYPE_x, callback: ((string?) -> ())?) -> Dropdown__DARKLUA_TYPE_K,
+    NewMenu: (self: any, opts: MenuOpts__DARKLUA_TYPE_z) -> Menu__DARKLUA_TYPE_L,
 }
 
-type Button__DARKLUA_TYPE_y = Component__DARKLUA_TYPE_e & {
+type Button__DARKLUA_TYPE_B = Component__DARKLUA_TYPE_e & {
     button: TextButton,
     callback: (() -> any)?,
-    SetText: (self: Button__DARKLUA_TYPE_y, value: string) -> (),
-    SetEnabled: (self: Button__DARKLUA_TYPE_y, value: boolean) -> (),
+    SetText: (self: Button__DARKLUA_TYPE_B, value: string) -> (),
+    SetEnabled: (self: Button__DARKLUA_TYPE_B, value: boolean) -> (),
 }
 
-type Textbox__DARKLUA_TYPE_z = Component__DARKLUA_TYPE_e & {
+type Textbox__DARKLUA_TYPE_C = Component__DARKLUA_TYPE_e & {
     button: TextBox,
     callback: ((string) -> any)?,
-    GetValue: (self: Textbox__DARKLUA_TYPE_z) -> string,
-    SetValue: (self: Textbox__DARKLUA_TYPE_z, value: string) -> (),
-    SetPlaceholder: (self: Textbox__DARKLUA_TYPE_z, value: string) -> (),
-    SetEnabled: (self: Textbox__DARKLUA_TYPE_z, value: boolean) -> (),
-    Focus: (self: Textbox__DARKLUA_TYPE_z) -> (),
-    OnChanged: (self: Textbox__DARKLUA_TYPE_z, callback: (string) -> ()) -> RBXScriptConnection,
-    OnSubmitted: (self: Textbox__DARKLUA_TYPE_z, callback: (string) -> ()) -> RBXScriptConnection,
+    GetValue: (self: Textbox__DARKLUA_TYPE_C) -> string,
+    SetValue: (self: Textbox__DARKLUA_TYPE_C, value: string) -> (),
+    SetPlaceholder: (self: Textbox__DARKLUA_TYPE_C, value: string) -> (),
+    SetEnabled: (self: Textbox__DARKLUA_TYPE_C, value: boolean) -> (),
+    Focus: (self: Textbox__DARKLUA_TYPE_C) -> (),
+    OnChanged: (self: Textbox__DARKLUA_TYPE_C, callback: (string) -> ()) -> RBXScriptConnection,
+    OnSubmitted: (self: Textbox__DARKLUA_TYPE_C, callback: (string) -> ()) -> RBXScriptConnection,
 }
 
-type Row__DARKLUA_TYPE_A = Component__DARKLUA_TYPE_e & {
+type Row__DARKLUA_TYPE_D = Component__DARKLUA_TYPE_e & {
     rowFrame: Frame,
     componentWidths: {number},
     gap: number,
-    NewButton: (self: Row__DARKLUA_TYPE_A, opts: RowComponentOpts__DARKLUA_TYPE_h, callback: (() -> any)?) -> Button__DARKLUA_TYPE_y,
-    NewTextbox: (self: Row__DARKLUA_TYPE_A, opts: RowComponentOpts__DARKLUA_TYPE_h, callback: ((string) -> any)?) -> Textbox__DARKLUA_TYPE_z,
+    NewButton: (self: Row__DARKLUA_TYPE_D, opts: RowComponentOpts__DARKLUA_TYPE_h, callback: (() -> any)?) -> Button__DARKLUA_TYPE_B,
+    NewTextbox: (self: Row__DARKLUA_TYPE_D, opts: RowComponentOpts__DARKLUA_TYPE_h, callback: ((string) -> any)?) -> Textbox__DARKLUA_TYPE_C,
 }
 
-type SplitPane__DARKLUA_TYPE_B = Component__DARKLUA_TYPE_e & {
-    first: Container__DARKLUA_TYPE_x, second: Container__DARKLUA_TYPE_x, ratio: number,
-    SetRatio: (self: SplitPane__DARKLUA_TYPE_B, value: number) -> (),
+type SplitPane__DARKLUA_TYPE_E = Component__DARKLUA_TYPE_e & {
+    first: Container__DARKLUA_TYPE_A, second: Container__DARKLUA_TYPE_A, ratio: number,
+    SetRatio: (self: SplitPane__DARKLUA_TYPE_E, value: number) -> (),
 }
 
-type Console__DARKLUA_TYPE_C = Component__DARKLUA_TYPE_e & {
+type Console__DARKLUA_TYPE_F = Component__DARKLUA_TYPE_e & {
     consoleFrame: ScrollingFrame,
-    NewEntry: (self: Console__DARKLUA_TYPE_C, text: string, messageType: ConsoleMessageType__DARKLUA_TYPE_k) -> (),
-    Append: (self: Console__DARKLUA_TYPE_C, entries: {ConsoleEntry__DARKLUA_TYPE_l}) -> (),
-    SetPaused: (self: Console__DARKLUA_TYPE_C, value: boolean) -> (),
-    SetAutoScroll: (self: Console__DARKLUA_TYPE_C, value: boolean) -> (),
+    NewEntry: (self: Console__DARKLUA_TYPE_F, text: string, messageType: ConsoleMessageType__DARKLUA_TYPE_k) -> (),
+    Append: (self: Console__DARKLUA_TYPE_F, entries: {ConsoleEntry__DARKLUA_TYPE_l}) -> (),
+    SetPaused: (self: Console__DARKLUA_TYPE_F, value: boolean) -> (),
+    SetAutoScroll: (self: Console__DARKLUA_TYPE_F, value: boolean) -> (),
 }
 
-type List__DARKLUA_TYPE_D = Component__DARKLUA_TYPE_e & {
-    records: {Record__DARKLUA_TYPE_n}, selectedId: (string | number)?,
-    SetRecords: (self: List__DARKLUA_TYPE_D, records: {Record__DARKLUA_TYPE_n}) -> (),
-    Append: (self: List__DARKLUA_TYPE_D, records: {Record__DARKLUA_TYPE_n}) -> (),
-    Refresh: (self: List__DARKLUA_TYPE_D) -> (),
-    SetFilter: (self: List__DARKLUA_TYPE_D, value: string) -> (),
-    SetSort: (self: List__DARKLUA_TYPE_D, key: string, ascending: boolean?) -> (),
-    Select: (self: List__DARKLUA_TYPE_D, id: string | number) -> (),
-    OnSelected: (self: List__DARKLUA_TYPE_D, callback: (Record__DARKLUA_TYPE_n?) -> ()) -> RBXScriptConnection,
+type List__DARKLUA_TYPE_G = Component__DARKLUA_TYPE_e & {
+    records: {Record__DARKLUA_TYPE_q}, selectedId: (string | number)?,
+    SetRecords: (self: List__DARKLUA_TYPE_G, records: {Record__DARKLUA_TYPE_q}) -> (),
+    Append: (self: List__DARKLUA_TYPE_G, records: {Record__DARKLUA_TYPE_q}) -> (),
+    Refresh: (self: List__DARKLUA_TYPE_G) -> (),
+    SetFilter: (self: List__DARKLUA_TYPE_G, value: string) -> (),
+    SetSort: (self: List__DARKLUA_TYPE_G, key: string, ascending: boolean?) -> (),
+    Select: (self: List__DARKLUA_TYPE_G, id: string | number) -> (),
+    OnSelected: (self: List__DARKLUA_TYPE_G, callback: (Record__DARKLUA_TYPE_q?) -> ()) -> RBXScriptConnection,
 }
 
-type Tree__DARKLUA_TYPE_E = Component__DARKLUA_TYPE_e & {
-    SetNodes: (self: Tree__DARKLUA_TYPE_E, nodes: {TreeNode__DARKLUA_TYPE_q}) -> (),
-    Expand: (self: Tree__DARKLUA_TYPE_E, id: string | number, value: boolean) -> (),
-    Select: (self: Tree__DARKLUA_TYPE_E, id: string | number) -> (),
-    OnSelected: (self: Tree__DARKLUA_TYPE_E, callback: (TreeNode__DARKLUA_TYPE_q?) -> ()) -> RBXScriptConnection,
+type Tree__DARKLUA_TYPE_H = Component__DARKLUA_TYPE_e & {
+    SetNodes: (self: Tree__DARKLUA_TYPE_H, nodes: {TreeNode__DARKLUA_TYPE_t}) -> (),
+    Expand: (self: Tree__DARKLUA_TYPE_H, id: string | number, value: boolean) -> (),
+    Select: (self: Tree__DARKLUA_TYPE_H, id: string | number) -> (),
+    OnSelected: (self: Tree__DARKLUA_TYPE_H, callback: (TreeNode__DARKLUA_TYPE_t?) -> ()) -> RBXScriptConnection,
 }
 
-type TextViewer__DARKLUA_TYPE_F = Component__DARKLUA_TYPE_e & {
+type TextViewer__DARKLUA_TYPE_I = Component__DARKLUA_TYPE_e & {
     textbox: TextBox,
-    SetText: (self: TextViewer__DARKLUA_TYPE_F, value: string) -> (),
-    GetText: (self: TextViewer__DARKLUA_TYPE_F) -> string,
-    OnChanged: (self: TextViewer__DARKLUA_TYPE_F, callback: (string) -> ()) -> RBXScriptConnection,
+    SetText: (self: TextViewer__DARKLUA_TYPE_I, value: string) -> (),
+    GetText: (self: TextViewer__DARKLUA_TYPE_I) -> string,
+    SetSyntax: (self: TextViewer__DARKLUA_TYPE_I, value: Syntax__DARKLUA_TYPE_m?) -> (),
+    OnChanged: (self: TextViewer__DARKLUA_TYPE_I, callback: (string) -> ()) -> RBXScriptConnection,
 }
 
-type Toggle__DARKLUA_TYPE_G = Button__DARKLUA_TYPE_y & {
-    SetValue: (self: Toggle__DARKLUA_TYPE_G, value: boolean) -> (),
-    GetValue: (self: Toggle__DARKLUA_TYPE_G) -> boolean,
-    OnChanged: (self: Toggle__DARKLUA_TYPE_G, callback: (boolean) -> ()) -> RBXScriptConnection,
+type Toggle__DARKLUA_TYPE_J = Button__DARKLUA_TYPE_B & {
+    SetValue: (self: Toggle__DARKLUA_TYPE_J, value: boolean) -> (),
+    GetValue: (self: Toggle__DARKLUA_TYPE_J) -> boolean,
+    OnChanged: (self: Toggle__DARKLUA_TYPE_J, callback: (boolean) -> ()) -> RBXScriptConnection,
 }
 
-type Dropdown__DARKLUA_TYPE_H = Component__DARKLUA_TYPE_e & {
+type Dropdown__DARKLUA_TYPE_K = Component__DARKLUA_TYPE_e & {
     button: TextButton,
-    SetOpen: (self: Dropdown__DARKLUA_TYPE_H, value: boolean) -> (),
-    SetValue: (self: Dropdown__DARKLUA_TYPE_H, value: string?) -> (),
-    GetValue: (self: Dropdown__DARKLUA_TYPE_H) -> string?,
-    SetOptions: (self: Dropdown__DARKLUA_TYPE_H, options: {string}) -> (),
-    SetEnabled: (self: Dropdown__DARKLUA_TYPE_H, value: boolean) -> (),
-    OnChanged: (self: Dropdown__DARKLUA_TYPE_H, callback: (string?) -> ()) -> RBXScriptConnection,
+    SetOpen: (self: Dropdown__DARKLUA_TYPE_K, value: boolean) -> (),
+    SetValue: (self: Dropdown__DARKLUA_TYPE_K, value: string?) -> (),
+    GetValue: (self: Dropdown__DARKLUA_TYPE_K) -> string?,
+    SetOptions: (self: Dropdown__DARKLUA_TYPE_K, options: {string}) -> (),
+    SetEnabled: (self: Dropdown__DARKLUA_TYPE_K, value: boolean) -> (),
+    OnChanged: (self: Dropdown__DARKLUA_TYPE_K, callback: (string?) -> ()) -> RBXScriptConnection,
 }
 
-type Menu__DARKLUA_TYPE_I = Button__DARKLUA_TYPE_y & { SetOpen: (self: Menu__DARKLUA_TYPE_I, value: boolean) -> () }
+type Menu__DARKLUA_TYPE_L = Button__DARKLUA_TYPE_B & { SetOpen: (self: Menu__DARKLUA_TYPE_L, value: boolean) -> () }
 
-type Section__DARKLUA_TYPE_J = Container__DARKLUA_TYPE_x & { parentTab: Tab__DARKLUA_TYPE_K, sectionFrame: Frame }
+type Section__DARKLUA_TYPE_M = Container__DARKLUA_TYPE_A & { parentTab: Tab__DARKLUA_TYPE_N, sectionFrame: Frame }
 
-type Tab__DARKLUA_TYPE_K = Container__DARKLUA_TYPE_x & {
-    parentWindow: Window__DARKLUA_TYPE_P, tabBtn: TextButton, sections: {Component__DARKLUA_TYPE_e}, container: ScrollingFrame,
+type Tab__DARKLUA_TYPE_N = Container__DARKLUA_TYPE_A & {
+    parentWindow: Window__DARKLUA_TYPE_S, tabBtn: TextButton, sections: {Component__DARKLUA_TYPE_e}, container: ScrollingFrame,
     columns: {left: Frame, right: Frame, top: Frame, bottom: Frame, full: Frame},
-    NewSection: (self: Tab__DARKLUA_TYPE_K, name: string, side: SectionSide__DARKLUA_TYPE_c?) -> Section__DARKLUA_TYPE_J,
-    ShowCurrentTab: (self: Tab__DARKLUA_TYPE_K) -> (), HideCurrentTab: (self: Tab__DARKLUA_TYPE_K) -> (),
+    NewSection: (self: Tab__DARKLUA_TYPE_N, name: string, side: SectionSide__DARKLUA_TYPE_c?) -> Section__DARKLUA_TYPE_M,
+    ShowCurrentTab: (self: Tab__DARKLUA_TYPE_N) -> (), HideCurrentTab: (self: Tab__DARKLUA_TYPE_N) -> (),
 }
 
-type TabOpts__DARKLUA_TYPE_L = { layout: ("sections" | "free")? }
+type TabOpts__DARKLUA_TYPE_O = { layout: ("sections" | "free")? }
 
-type WindowOpts__DARKLUA_TYPE_M = { size: UDim2?, minSize: Vector2? }
+type WindowOpts__DARKLUA_TYPE_P = { size: UDim2?, minSize: Vector2? }
 
-type WindowGuis__DARKLUA_TYPE_N = { ScreenGui: ScreenGui, Root: Frame, Topbar: Frame, Sidebar: ScrollingFrame }
+type WindowGuis__DARKLUA_TYPE_Q = { ScreenGui: ScreenGui, Root: Frame, Topbar: Frame, Sidebar: ScrollingFrame }
 
-type ShortcutOpts__DARKLUA_TYPE_O = { ctrl: boolean?, shift: boolean? }
+type ShortcutOpts__DARKLUA_TYPE_R = { ctrl: boolean?, shift: boolean? }
 
-type Window__DARKLUA_TYPE_P = {
-    ctx: ctx__DARKLUA_TYPE_b, guis: WindowGuis__DARKLUA_TYPE_N, scope: Scope__DARKLUA_TYPE_d, conns: {RBXScriptConnection},
-    currentTab: Tab__DARKLUA_TYPE_K?, tabs: {Tab__DARKLUA_TYPE_K},
-    Show: (self: Window__DARKLUA_TYPE_P) -> (), Hide: (self: Window__DARKLUA_TYPE_P) -> (), Toggle: (self: Window__DARKLUA_TYPE_P) -> (),
-    SetVisible: (self: Window__DARKLUA_TYPE_P, value: boolean) -> (),
-    Clear: (self: Window__DARKLUA_TYPE_P) -> (), Destroy: (self: Window__DARKLUA_TYPE_P) -> (),
-    NewTab: (self: Window__DARKLUA_TYPE_P, name: string, opts: TabOpts__DARKLUA_TYPE_L?) -> Tab__DARKLUA_TYPE_K,
-    SelectTab: (self: Window__DARKLUA_TYPE_P, tab: Tab__DARKLUA_TYPE_K) -> (),
-    BindShortcut: (self: Window__DARKLUA_TYPE_P, key: Enum.KeyCode, callback: () -> (), opts: ShortcutOpts__DARKLUA_TYPE_O?) -> RBXScriptConnection,
+type Window__DARKLUA_TYPE_S = {
+    ctx: ctx__DARKLUA_TYPE_b, guis: WindowGuis__DARKLUA_TYPE_Q, scope: Scope__DARKLUA_TYPE_d, conns: {RBXScriptConnection},
+    currentTab: Tab__DARKLUA_TYPE_N?, tabs: {Tab__DARKLUA_TYPE_N},
+    Show: (self: Window__DARKLUA_TYPE_S) -> (), Hide: (self: Window__DARKLUA_TYPE_S) -> (), Toggle: (self: Window__DARKLUA_TYPE_S) -> (),
+    SetVisible: (self: Window__DARKLUA_TYPE_S, value: boolean) -> (),
+    Clear: (self: Window__DARKLUA_TYPE_S) -> (), Destroy: (self: Window__DARKLUA_TYPE_S) -> (),
+    NewTab: (self: Window__DARKLUA_TYPE_S, name: string, opts: TabOpts__DARKLUA_TYPE_O?) -> Tab__DARKLUA_TYPE_N,
+    SelectTab: (self: Window__DARKLUA_TYPE_S, tab: Tab__DARKLUA_TYPE_N) -> (),
+    BindShortcut: (self: Window__DARKLUA_TYPE_S, key: Enum.KeyCode, callback: () -> (), opts: ShortcutOpts__DARKLUA_TYPE_R?) -> RBXScriptConnection,
 }
 local __DARKLUA_BUNDLE_MODULES={cache={}::any}do do local function __modImpl()
 return {
@@ -216,6 +229,16 @@ return {
     },
 }
 end function __DARKLUA_BUNDLE_MODULES.a():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.a if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.a=v end return v.c end end do local function __modImpl()
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -568,7 +591,7 @@ local m = {}
 local controls = __DARKLUA_BUNDLE_MODULES.f()
 local types = __DARKLUA_BUNDLE_MODULES.b()
 
-function m.new(owner: Container__DARKLUA_TYPE_x, opts: ComponentOpts__DARKLUA_TYPE_f, callback, parent: GuiObject?): Button__DARKLUA_TYPE_y    
+function m.new(owner: Container__DARKLUA_TYPE_A, opts: ComponentOpts__DARKLUA_TYPE_f, callback, parent: GuiObject?): Button__DARKLUA_TYPE_B    
 return controls.button(owner, opts, callback, parent)
 end
 
@@ -578,7 +601,7 @@ local m = {}
 local controls = __DARKLUA_BUNDLE_MODULES.f()
 local types = __DARKLUA_BUNDLE_MODULES.b()
 
-function m.new(owner: Container__DARKLUA_TYPE_x, opts: ComponentOpts__DARKLUA_TYPE_f, callback, parent: GuiObject?): Textbox__DARKLUA_TYPE_z    
+function m.new(owner: Container__DARKLUA_TYPE_A, opts: ComponentOpts__DARKLUA_TYPE_f, callback, parent: GuiObject?): Textbox__DARKLUA_TYPE_C    
 return controls.textbox(owner, opts, callback, parent)
 end
 
@@ -619,7 +642,7 @@ local function add(self, component, opts)
     return component
 end
 
-function m.new(owner: Container__DARKLUA_TYPE_x, opts: RowOpts__DARKLUA_TYPE_g?): Row__DARKLUA_TYPE_A    
+function m.new(owner: Container__DARKLUA_TYPE_A, opts: RowOpts__DARKLUA_TYPE_g?): Row__DARKLUA_TYPE_D    
 local options = opts or {}
     local frame = Instance.new("Frame")
     frame.Name = options.text or "Row"
@@ -646,24 +669,155 @@ local options = opts or {}
     return self
 end
 
-function m:NewButton(opts: RowComponentOpts__DARKLUA_TYPE_h, callback): Button__DARKLUA_TYPE_y    
+function m:NewButton(opts: RowComponentOpts__DARKLUA_TYPE_h, callback): Button__DARKLUA_TYPE_B    
 return add(self, controls.button(self, opts, callback, self.rowFrame), opts)
 end
 
-function m:NewTextbox(opts: RowComponentOpts__DARKLUA_TYPE_h, callback): Textbox__DARKLUA_TYPE_z    
+function m:NewTextbox(opts: RowComponentOpts__DARKLUA_TYPE_h, callback): Textbox__DARKLUA_TYPE_C    
 return add(self, controls.textbox(self, opts, callback, self.rowFrame), opts)
 end
 
 return m
 end function __DARKLUA_BUNDLE_MODULES.i():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.i if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.i=v end return v.c end end do local function __modImpl()
+--[[AI]]
+
+-- Standalone Lua/Luau lexer and Roblox RichText renderer. No UI instances required.
+
+local m = {}
+
+m.theme = {
+    keyword = "#C586C0", builtin = "#4EC9B0", string = "#CE9178",
+    comment = "#6A9955", number = "#B5CEA8", operator = "#D4D4D4",
+}
+
+local function words(value)
+    local result = {}
+    for word in value:gmatch("%S+") do result[word] = true end
+    return result
+end
+
+local keywords = words("and break do else elseif end false for function if in local nil not or repeat return then true until while continue")
+local builtins = words("assert error ipairs next pairs pcall print rawequal rawget rawset select setmetatable getmetatable tonumber tostring type unpack xpcall collectgarbage require warn typeof game workspace script Enum Instance Color3 Vector2 Vector3 UDim UDim2 CFrame math string table coroutine utf8 os bit32 task buffer")
+local operators = words("... .. ..= // //= == ~= <= >= += -= *= /= %= ^= :: ->")
+
+function m.Escape(value: string): string
+    local escaped = value:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")
+        :gsub('"', "&quot;"):gsub("'", "&apos;")
+    return escaped
+end
+
+-- Returns the byte after a long-bracket literal, including unfinished literals.
+local function longBracket(source, position)
+    local equals = source:sub(position):match("^%[(=*)%[")
+    if not equals then return nil end
+    local _, finish = source:find("]" .. equals .. "]", position + #equals + 2, true)
+    return finish and finish + 1 or #source + 1
+end
+
+function m.Tokenize(source: string)
+    local tokens = {}
+    local position, length = 1, #source
+    while position <= length do
+        local start = position
+        local char = source:sub(position, position)
+        local kind
+        if char:match("%s") then
+            kind = "whitespace"
+            repeat position += 1 until position > length or not source:sub(position, position):match("%s")
+        elseif source:sub(position, position + 1) == "--" then
+            kind = "comment"
+            position = longBracket(source, position + 2) or source:find("[\r\n]", position + 2) or length + 1
+        elseif char == '"' or char == "'" or char == "`" then
+            kind = "string"
+            position += 1
+            while position <= length do
+                local current = source:sub(position, position)
+                if current == "\\" then
+                    position = math.min(position + 2, length + 1)
+                elseif current == char then
+                    position += 1
+                    break
+                elseif char ~= "`" and (current == "\n" or current == "\r") then
+                    break
+                else
+                    position += 1
+                end
+            end
+        elseif char == "[" and longBracket(source, position) then
+            kind = "string"
+            position = longBracket(source, position)
+        elseif char:match("[%a_]") then
+            position += 1
+            while position <= length and source:sub(position, position):match("[%w_]") do position += 1 end
+            local word = source:sub(start, position - 1)
+            kind = keywords[word] and "keyword" or builtins[word] and "builtin" or "identifier"
+        elseif char:match("%d") or (char == "." and source:sub(position + 1, position + 1):match("%d")) then
+            kind = "number"
+            local rest = source:sub(position)
+            local number = rest:match("^0[xX][%da-fA-F_]+") or rest:match("^0[bB][01_]+")
+            if number then
+                position += #number
+                if number:match("^0[xX]") then
+                    if source:sub(position, position) == "." and source:sub(position + 1, position + 1) ~= "." then
+                        position += 1
+                        position += #(source:sub(position):match("^[%da-fA-F_]+") or "")
+                    end
+                    position += #(source:sub(position):match("^[pP][+-]?%d[%d_]*") or "")
+                end
+            else
+                local whole = rest:match("^%d[%d_]*") or ""
+                position += #whole
+                if source:sub(position, position) == "." and source:sub(position + 1, position + 1) ~= "." then
+                    position += 1
+                    local fraction = source:sub(position):match("^[%d_]+") or ""
+                    position += #fraction
+                end
+                local exponent = source:sub(position):match("^[eE][+-]?%d[%d_]*")
+                if exponent then position += #exponent end
+            end
+        else
+            kind = "operator"
+            local three = source:sub(position, position + 2)
+            local two = source:sub(position, position + 1)
+            position += operators[three] and 3 or operators[two] and 2 or 1
+        end
+        table.insert(tokens, { kind = kind, text = source:sub(start, position - 1), start = start, finish = position - 1 })
+    end
+    return tokens
+end
+
+-- Theme overrides use hex RGB strings, e.g. { keyword = "#FF80AA" }.
+function m.Highlight(source: string, theme): string
+    local output = {}
+    for _, token in m.Tokenize(source) do
+        local value = m.Escape(token.text)
+        local color = (theme and theme[token.kind]) or m.theme[token.kind]
+        if color then
+            assert(type(color) == "string" and color:match("^#%x%x%x%x%x%x$"), "syntax colors must be #RRGGBB strings")
+            value = '<font color="' .. color .. '">' .. value .. '</font>'
+        end
+        table.insert(output, value)
+    end
+    return table.concat(output)
+end
+
+function m.ValidateSyntax(syntax)
+    assert(syntax == nil or syntax == false or syntax == "lua" or syntax == "luau", "syntax must be lua, luau, false, or nil")
+    return syntax == "lua" or syntax == "luau"
+end
+
+return m
+end function __DARKLUA_BUNDLE_MODULES.j():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.j if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.j=v end return v.c end end do local function __modImpl()
 local m = {}
 m.__index = m
 
 local colors = __DARKLUA_BUNDLE_MODULES.a()
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
+local syntaxHighlight = __DARKLUA_BUNDLE_MODULES.j()
 
 function m.new(owner, opts)
     opts = opts or {}
+    local highlighted = syntaxHighlight.ValidateSyntax(opts.syntax)
     local frame = Instance.new("ScrollingFrame")
     frame.Name = opts.text or "Console"
     frame.BackgroundColor3 = colors.console.background
@@ -688,6 +842,8 @@ function m.new(owner, opts)
     self.autoScroll = opts.autoScroll ~= false
     self.paused = false
     self.order = 0
+    self.highlighted = highlighted
+    self.syntaxTheme = opts.syntaxTheme
     local layout = Instance.new("UIListLayout")
     layout.SortOrder = Enum.SortOrder.LayoutOrder
     layout.Parent = frame
@@ -710,7 +866,8 @@ function m:NewEntry(text: string, messageType: string)
     entry.Font = Enum.Font.Code
     entry.TextSize = 14
     entry.TextWrapped = true
-    entry.Text = text
+    entry.RichText = self.highlighted
+    entry.Text = self.highlighted and syntaxHighlight.Highlight(text, self.syntaxTheme) or text
     entry.Size = UDim2.new(1, -10, 0, 0)
     entry.AutomaticSize = Enum.AutomaticSize.Y
     self.order += 1
@@ -740,7 +897,7 @@ function m:Clear()
 end
 
 return m
-end function __DARKLUA_BUNDLE_MODULES.j():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.j if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.j=v end return v.c end end do local function __modImpl()
+end function __DARKLUA_BUNDLE_MODULES.k():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.k if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.k=v end return v.c end end do local function __modImpl()
 local m = {}
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
 
@@ -791,7 +948,7 @@ function m.new(owner, opts)
 end
 
 return m
-end function __DARKLUA_BUNDLE_MODULES.k():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.k if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.k=v end return v.c end end do local function __modImpl()
+end function __DARKLUA_BUNDLE_MODULES.l():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.l if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.l=v end return v.c end end do local function __modImpl()
 local m = {}
 
 function m.scale(gui)
@@ -830,11 +987,11 @@ function m.attach(scope, handle, started, moved)
 end
 
 return m
-end function __DARKLUA_BUNDLE_MODULES.l():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.l if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.l=v end return v.c end end do local function __modImpl()
+end function __DARKLUA_BUNDLE_MODULES.m():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.m if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.m=v end return v.c end end do local function __modImpl()
 local m = {}
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
 local colors = __DARKLUA_BUNDLE_MODULES.a()
-local dragUtil = __DARKLUA_BUNDLE_MODULES.l()
+local dragUtil = __DARKLUA_BUNDLE_MODULES.m()
 
 function m.new(owner, opts)
     opts = opts or {}
@@ -902,7 +1059,7 @@ function m.new(owner, opts)
 end
 
 return m
-end function __DARKLUA_BUNDLE_MODULES.m():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.m if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.m=v end return v.c end end do local function __modImpl()
+end function __DARKLUA_BUNDLE_MODULES.n():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.n if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.n=v end return v.c end end do local function __modImpl()
 local m = {}
 m.__index = m
 
@@ -1129,7 +1286,7 @@ function m:Clear()
 end
 
 return m
-end function __DARKLUA_BUNDLE_MODULES.n():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.n if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.n=v end return v.c end end do local function __modImpl()
+end function __DARKLUA_BUNDLE_MODULES.o():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.o if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.o=v end return v.c end end do local function __modImpl()
 local m = {}
 m.__index = m
 
@@ -1319,14 +1476,16 @@ function m:Clear()
 end
 
 return m
-end function __DARKLUA_BUNDLE_MODULES.o():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.o if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.o=v end return v.c end end do local function __modImpl()
+end function __DARKLUA_BUNDLE_MODULES.p():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.p if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.p=v end return v.c end end do local function __modImpl()
 local m = {}
 local ui = __DARKLUA_BUNDLE_MODULES.c()
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
 local colors = __DARKLUA_BUNDLE_MODULES.a()
+local syntaxHighlight = __DARKLUA_BUNDLE_MODULES.j()
 
 function m.new(owner, opts)
     opts = opts or {}
+    local highlighted = syntaxHighlight.ValidateSyntax(opts.syntax)
     local frame = Instance.new("ScrollingFrame")
     frame.Name = "TextViewer"
     frame.BackgroundColor3 = colors.console.background
@@ -1358,8 +1517,39 @@ function m.new(owner, opts)
     text.Size = UDim2.fromOffset(1, 20)
     text.AutomaticSize = Enum.AutomaticSize.XY
     self.textbox = text
+    text.RichText = false
+    local display = Instance.new("TextLabel")
+    display.Name = "Highlight"
+    display.BackgroundTransparency = 1
+    display.BorderSizePixel = 0
+    display.Active = false
+    display.Selectable = false
+    display.Size = UDim2.fromScale(1, 1)
+    display.Font = text.Font
+    display.TextSize = text.TextSize
+    display.TextColor3 = colors.text
+    display.TextWrapped = false
+    display.TextXAlignment = text.TextXAlignment
+    display.TextYAlignment = text.TextYAlignment
+    display.RichText = true
+    display.ZIndex = text.ZIndex + 1
+    display.Parent = text
+    self.highlightLabel = display
+    local function render()
+        display.Visible = highlighted
+        text.TextTransparency = display.Visible and 1 or 0
+        display.Text = highlighted and syntaxHighlight.Highlight(text.Text, opts.syntaxTheme) or ""
+    end
     local changed = lifecycle.event(self)
-    self.scope:Connect(text:GetPropertyChangedSignal("Text"), function() changed:Fire(text.Text) end)
+    self.scope:Connect(text:GetPropertyChangedSignal("Text"), function()
+        render()
+        changed:Fire(text.Text)
+    end)
+
+    function self:SetSyntax(value)
+        highlighted = syntaxHighlight.ValidateSyntax(value)
+        render()
+    end
 
     function self:SetText(value: string)
         text.Text = value
@@ -1378,11 +1568,12 @@ function m.new(owner, opts)
     end
 
     self:SetText(opts.text or "")
+    render()
     return self
 end
 
 return m
-end function __DARKLUA_BUNDLE_MODULES.p():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.p if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.p=v end return v.c end end do local function __modImpl()
+end function __DARKLUA_BUNDLE_MODULES.q():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.q if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.q=v end return v.c end end do local function __modImpl()
 local m = {}
 local controls = __DARKLUA_BUNDLE_MODULES.f()
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
@@ -1414,7 +1605,7 @@ function m.new(owner, opts, callback)
 end
 
 return m
-end function __DARKLUA_BUNDLE_MODULES.q():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.q if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.q=v end return v.c end end do local function __modImpl()
+end function __DARKLUA_BUNDLE_MODULES.r():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.r if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.r=v end return v.c end end do local function __modImpl()
 local m = {}
 local colors = __DARKLUA_BUNDLE_MODULES.a()
 
@@ -1473,13 +1664,13 @@ function m.attach(self, popup, anchor)
 end
 
 return m
-end function __DARKLUA_BUNDLE_MODULES.r():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.r if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.r=v end return v.c end end do local function __modImpl()
+end function __DARKLUA_BUNDLE_MODULES.s():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.s if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.s=v end return v.c end end do local function __modImpl()
 local m = {}
 local colors = __DARKLUA_BUNDLE_MODULES.a()
 local ui = __DARKLUA_BUNDLE_MODULES.c()
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
 local scope = __DARKLUA_BUNDLE_MODULES.d()
-local popupUtil = __DARKLUA_BUNDLE_MODULES.r()
+local popupUtil = __DARKLUA_BUNDLE_MODULES.s()
 
 function m.new(owner, opts, callback)
     local frame = Instance.new("Frame")
@@ -1580,11 +1771,11 @@ function m.new(owner, opts, callback)
 end
 
 return m
-end function __DARKLUA_BUNDLE_MODULES.s():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.s if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.s=v end return v.c end end do local function __modImpl()
+end function __DARKLUA_BUNDLE_MODULES.t():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.t if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.t=v end return v.c end end do local function __modImpl()
 local m = {}
 local ui = __DARKLUA_BUNDLE_MODULES.c()
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
-local popupUtil = __DARKLUA_BUNDLE_MODULES.r()
+local popupUtil = __DARKLUA_BUNDLE_MODULES.s()
 
 function m.new(owner, opts)
     local frame = Instance.new("Frame")
@@ -1646,20 +1837,20 @@ function m.new(owner, opts)
 end
 
 return m
-end function __DARKLUA_BUNDLE_MODULES.t():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.t if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.t=v end return v.c end end do local function __modImpl()
+end function __DARKLUA_BUNDLE_MODULES.u():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.u if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.u=v end return v.c end end do local function __modImpl()
 local m = {}
 local button = __DARKLUA_BUNDLE_MODULES.g()
 local textbox = __DARKLUA_BUNDLE_MODULES.h()
 local row = __DARKLUA_BUNDLE_MODULES.i()
-local console = __DARKLUA_BUNDLE_MODULES.j()
-local panel = __DARKLUA_BUNDLE_MODULES.k()
-local split = __DARKLUA_BUNDLE_MODULES.m()
-local list = __DARKLUA_BUNDLE_MODULES.n()
-local tree = __DARKLUA_BUNDLE_MODULES.o()
-local viewer = __DARKLUA_BUNDLE_MODULES.p()
-local toggle = __DARKLUA_BUNDLE_MODULES.q()
-local dropdown = __DARKLUA_BUNDLE_MODULES.s()
-local menu = __DARKLUA_BUNDLE_MODULES.t()
+local console = __DARKLUA_BUNDLE_MODULES.k()
+local panel = __DARKLUA_BUNDLE_MODULES.l()
+local split = __DARKLUA_BUNDLE_MODULES.n()
+local list = __DARKLUA_BUNDLE_MODULES.o()
+local tree = __DARKLUA_BUNDLE_MODULES.p()
+local viewer = __DARKLUA_BUNDLE_MODULES.q()
+local toggle = __DARKLUA_BUNDLE_MODULES.r()
+local dropdown = __DARKLUA_BUNDLE_MODULES.t()
+local menu = __DARKLUA_BUNDLE_MODULES.u()
 
 function m.attach(self)
     local function add(component)
@@ -1724,16 +1915,16 @@ function m.attach(self)
 end
 
 return m
-end function __DARKLUA_BUNDLE_MODULES.u():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.u if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.u=v end return v.c end end do local function __modImpl()
+end function __DARKLUA_BUNDLE_MODULES.v():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.v if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.v=v end return v.c end end do local function __modImpl()
 local m = {}
 m.__index = m
 
 local colors = __DARKLUA_BUNDLE_MODULES.a()
 local types = __DARKLUA_BUNDLE_MODULES.b()
-local container = __DARKLUA_BUNDLE_MODULES.u()
+local container = __DARKLUA_BUNDLE_MODULES.v()
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
 
-function m.new(tab: Tab__DARKLUA_TYPE_K, name: string, side: SectionSide__DARKLUA_TYPE_c, order: number): Section__DARKLUA_TYPE_J    
+function m.new(tab: Tab__DARKLUA_TYPE_N, name: string, side: SectionSide__DARKLUA_TYPE_c, order: number): Section__DARKLUA_TYPE_M    
 local frame = Instance.new("Frame")
     frame.Name = name
     frame.BackgroundColor3 = colors.section
@@ -1782,15 +1973,15 @@ local frame = Instance.new("Frame")
 end
 
 return m
-end function __DARKLUA_BUNDLE_MODULES.v():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.v if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.v=v end return v.c end end do local function __modImpl()
+end function __DARKLUA_BUNDLE_MODULES.w():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.w if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.w=v end return v.c end end do local function __modImpl()
 local m = {}
 m.__index = m
 
 local colors = __DARKLUA_BUNDLE_MODULES.a()
 
 local types = __DARKLUA_BUNDLE_MODULES.b()
-local section = __DARKLUA_BUNDLE_MODULES.v()
-local container = __DARKLUA_BUNDLE_MODULES.u()
+local section = __DARKLUA_BUNDLE_MODULES.w()
+local container = __DARKLUA_BUNDLE_MODULES.v()
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
 
 local function createTabBar(root: Frame, name: string): TextButton
@@ -1841,7 +2032,7 @@ local function createContainer(root: Frame, topbarHeight: number): ScrollingFram
     return container
 end
 
-function m.new(window: Window__DARKLUA_TYPE_P, name: string, opts: TabOpts__DARKLUA_TYPE_L?): Tab__DARKLUA_TYPE_K    
+function m.new(window: Window__DARKLUA_TYPE_S, name: string, opts: TabOpts__DARKLUA_TYPE_O?): Tab__DARKLUA_TYPE_N    
 local self = setmetatable({}, m)
 
     self.tabBtn = createTabBar(window.guis["Sidebar"], name)
@@ -1915,10 +2106,10 @@ local self = setmetatable({}, m)
             window:SelectTab(window.tabs[1])
         end
     end
-    return self :: Tab__DARKLUA_TYPE_K
+    return self :: Tab__DARKLUA_TYPE_N
 end
 
-function m.NewSection(self: Tab__DARKLUA_TYPE_K, name: string, side: SectionSide__DARKLUA_TYPE_c?): Section__DARKLUA_TYPE_J    
+function m.NewSection(self: Tab__DARKLUA_TYPE_N, name: string, side: SectionSide__DARKLUA_TYPE_c?): Section__DARKLUA_TYPE_M    
 local columnSide = side or "left"
     self.nextOrder = (self.nextOrder or 0) + 1
     local order = self.nextOrder
@@ -1928,16 +2119,16 @@ local columnSide = side or "left"
     return newSection
 end
 
-function m.ShowCurrentTab(self: Tab__DARKLUA_TYPE_K): ()
+function m.ShowCurrentTab(self: Tab__DARKLUA_TYPE_N): ()
     self.container.Visible = true
 end
 
-function m.HideCurrentTab(self: Tab__DARKLUA_TYPE_K): ()
+function m.HideCurrentTab(self: Tab__DARKLUA_TYPE_N): ()
     self.container.Visible = false
 end
 
 return m
-end function __DARKLUA_BUNDLE_MODULES.w():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.w if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.w=v end return v.c end end do local function __modImpl()
+end function __DARKLUA_BUNDLE_MODULES.x():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.x if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.x=v end return v.c end end do local function __modImpl()
 local m = {}
 m.__index = m
 
@@ -1946,10 +2137,10 @@ m.__index = m
 local colors = __DARKLUA_BUNDLE_MODULES.a()
 
 local types = __DARKLUA_BUNDLE_MODULES.b()
-local tab = __DARKLUA_BUNDLE_MODULES.w()
+local tab = __DARKLUA_BUNDLE_MODULES.x()
 
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
-local dragUtil = __DARKLUA_BUNDLE_MODULES.l()
+local dragUtil = __DARKLUA_BUNDLE_MODULES.m()
 
 local g = getgenv()
 
@@ -2025,7 +2216,7 @@ function m._createSidebar(root: Frame, topbarHeight: number): ScrollingFrame
     return frame
 end
 
-function m.new(opts: WindowOpts__DARKLUA_TYPE_M?): Window__DARKLUA_TYPE_P    
+function m.new(opts: WindowOpts__DARKLUA_TYPE_P?): Window__DARKLUA_TYPE_S    
 if g.simpleuiWindow then
         g.simpleuiWindow:Destroy()
     elseif g.ui then
@@ -2111,28 +2302,28 @@ if g.simpleuiWindow then
             positionStart.Y.Scale, positionStart.Y.Offset + (height - sizeStart.Y) * scale / parentScale * root.AnchorPoint.Y
         )
     end)
-    return self :: Window__DARKLUA_TYPE_P
+    return self :: Window__DARKLUA_TYPE_S
 end
 
-function m.Show(self: Window__DARKLUA_TYPE_P): ()
+function m.Show(self: Window__DARKLUA_TYPE_S): ()
     self.guis["ScreenGui"].Enabled = true
 end
 
-function m.Hide(self: Window__DARKLUA_TYPE_P): ()
+function m.Hide(self: Window__DARKLUA_TYPE_S): ()
     self.guis["ScreenGui"].Enabled = false
 end
 
-function m.Toggle(self: Window__DARKLUA_TYPE_P): ()
+function m.Toggle(self: Window__DARKLUA_TYPE_S): ()
     self.guis["ScreenGui"].Enabled = not self.guis["ScreenGui"].Enabled
 end
 
-function m.NewTab(self: Window__DARKLUA_TYPE_P, name: string, opts: TabOpts__DARKLUA_TYPE_L?): Tab__DARKLUA_TYPE_K    
+function m.NewTab(self: Window__DARKLUA_TYPE_S, name: string, opts: TabOpts__DARKLUA_TYPE_O?): Tab__DARKLUA_TYPE_N    
 local newTab = tab.new(self, name, opts)
     table.insert(self.tabs, newTab)
     return newTab
 end
 
-function m.SelectTab(self: Window__DARKLUA_TYPE_P, tab: Tab__DARKLUA_TYPE_K): ()
+function m.SelectTab(self: Window__DARKLUA_TYPE_S, tab: Tab__DARKLUA_TYPE_N): ()
     if self.currentTab then
         self.currentTab:HideCurrentTab()
     end
@@ -2155,9 +2346,9 @@ function m:BindShortcut(key, callback, opts)
 end
 
 return m
-end function __DARKLUA_BUNDLE_MODULES.x():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.x if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.x=v end return v.c end end end
-local Window = __DARKLUA_BUNDLE_MODULES.x()
-local tab = __DARKLUA_BUNDLE_MODULES.w()
+end function __DARKLUA_BUNDLE_MODULES.y():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.y if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.y=v end return v.c end end end
+local Window = __DARKLUA_BUNDLE_MODULES.y()
+local tab = __DARKLUA_BUNDLE_MODULES.x()
 
 local window = Window.new({})
 local testTab = window:NewTab("test")
@@ -2243,7 +2434,18 @@ local events = eventSection:NewList({
     },
 })
 local arguments = argumentSection:NewTree({ height = 120, emptyText = "Select an event to inspect its arguments" })
-local code = codeSection:NewTextViewer({ height = 120, text = "select an event" })
+local code = codeSection:NewTextViewer({ height = 120, text = "-- select an event", syntax = "lua" })
+local codeActions = codeSection:NewRow()
+local copyAll = codeActions:NewButton({ text = "Copy all", width = 80 }, function()
+    setclipboard(code:GetText())
+end)
+local rawView = false
+local viewRaw
+viewRaw = codeActions:NewButton({ text = "View raw", width = 110 }, function()
+    rawView = not rawView
+    code:SetSyntax(if rawView then false else "lua")
+    viewRaw:SetText(if rawView then "View highlighted" else "View raw")
+end)
 local searchRow = tools:NewRow()
 local filter = searchRow:NewTextbox({ text = "filter events" })
 searchRow:NewButton({ text = "Clear", width = 70 }, function() events:Clear() end)

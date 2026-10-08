@@ -1,5 +1,5 @@
-local Window = require("./Window")
-local tab = require("./Tab")
+local Window = require("./ui/Window")
+local tab = require("./ui/Tab")
 
 local window = Window.new({})
 local testTab = window:NewTab("test")
@@ -85,7 +85,18 @@ local events = eventSection:NewList({
     },
 })
 local arguments = argumentSection:NewTree({ height = 120, emptyText = "Select an event to inspect its arguments" })
-local code = codeSection:NewTextViewer({ height = 120, text = "select an event" })
+local code = codeSection:NewTextViewer({ height = 120, text = "-- select an event", syntax = "lua" })
+local codeActions = codeSection:NewRow()
+local copyAll = codeActions:NewButton({ text = "Copy all", width = 80 }, function()
+    setclipboard(code:GetText())
+end)
+local rawView = false
+local viewRaw
+viewRaw = codeActions:NewButton({ text = "View raw", width = 110 }, function()
+    rawView = not rawView
+    code:SetSyntax(if rawView then false else "lua")
+    viewRaw:SetText(if rawView then "View highlighted" else "View raw")
+end)
 local searchRow = tools:NewRow()
 local filter = searchRow:NewTextbox({ text = "filter events" })
 searchRow:NewButton({ text = "Clear", width = 70 }, function() events:Clear() end)

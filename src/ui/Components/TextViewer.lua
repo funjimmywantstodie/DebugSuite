@@ -2,9 +2,11 @@ local m = {}
 local ui = require("../util/UIConstructor")
 local lifecycle = require("../util/Lifecycle")
 local colors = require("../Colors")
+local syntaxHighlight = require("../SyntaxHighlight")
 
 function m.new(owner, opts)
     opts = opts or {}
+    local highlighted = syntaxHighlight.ValidateSyntax(opts.syntax)
     local frame = Instance.new("ScrollingFrame")
     frame.Name = "TextViewer"
     frame.BackgroundColor3 = colors.console.background
@@ -36,8 +38,39 @@ function m.new(owner, opts)
     text.Size = UDim2.fromOffset(1, 20)
     text.AutomaticSize = Enum.AutomaticSize.XY
     self.textbox = text
+    text.RichText = false
+    local display = Instance.new("TextLabel")
+    display.Name = "Highlight"
+    display.BackgroundTransparency = 1
+    display.BorderSizePixel = 0
+    display.Active = false
+    display.Selectable = false
+    display.Size = UDim2.fromScale(1, 1)
+    display.Font = text.Font
+    display.TextSize = text.TextSize
+    display.TextColor3 = colors.text
+    display.TextWrapped = false
+    display.TextXAlignment = text.TextXAlignment
+    display.TextYAlignment = text.TextYAlignment
+    display.RichText = true
+    display.ZIndex = text.ZIndex + 1
+    display.Parent = text
+    self.highlightLabel = display
+    local function render()
+        display.Visible = highlighted
+        text.TextTransparency = display.Visible and 1 or 0
+        display.Text = highlighted and syntaxHighlight.Highlight(text.Text, opts.syntaxTheme) or ""
+    end
     local changed = lifecycle.event(self)
-    self.scope:Connect(text:GetPropertyChangedSignal("Text"), function() changed:Fire(text.Text) end)
+    self.scope:Connect(text:GetPropertyChangedSignal("Text"), function()
+        render()
+        changed:Fire(text.Text)
+    end)
+
+    function self:SetSyntax(value)
+        highlighted = syntaxHighlight.ValidateSyntax(value)
+        render()
+    end
 
     function self:SetText(value: string)
         text.Text = value
@@ -56,6 +89,7 @@ function m.new(owner, opts)
     end
 
     self:SetText(opts.text or "")
+    render()
     return self
 end
 

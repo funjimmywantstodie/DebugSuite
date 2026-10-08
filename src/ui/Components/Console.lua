@@ -3,9 +3,11 @@ m.__index = m
 
 local colors = require("../Colors")
 local lifecycle = require("../util/Lifecycle")
+local syntaxHighlight = require("../SyntaxHighlight")
 
 function m.new(owner, opts)
     opts = opts or {}
+    local highlighted = syntaxHighlight.ValidateSyntax(opts.syntax)
     local frame = Instance.new("ScrollingFrame")
     frame.Name = opts.text or "Console"
     frame.BackgroundColor3 = colors.console.background
@@ -30,6 +32,8 @@ function m.new(owner, opts)
     self.autoScroll = opts.autoScroll ~= false
     self.paused = false
     self.order = 0
+    self.highlighted = highlighted
+    self.syntaxTheme = opts.syntaxTheme
     local layout = Instance.new("UIListLayout")
     layout.SortOrder = Enum.SortOrder.LayoutOrder
     layout.Parent = frame
@@ -52,7 +56,8 @@ function m:NewEntry(text: string, messageType: string)
     entry.Font = Enum.Font.Code
     entry.TextSize = 14
     entry.TextWrapped = true
-    entry.Text = text
+    entry.RichText = self.highlighted
+    entry.Text = self.highlighted and syntaxHighlight.Highlight(text, self.syntaxTheme) or text
     entry.Size = UDim2.new(1, -10, 0, 0)
     entry.AutomaticSize = Enum.AutomaticSize.Y
     self.order += 1

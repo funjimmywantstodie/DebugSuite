@@ -6,6 +6,10 @@ local types = require("./Types")
 local container = require("./Container")
 local lifecycle = require("./util/Lifecycle")
 
+local function updateHeight(self)
+    self.frame.Size = UDim2.new(1, 0, 0, 40 + self.layout.AbsoluteContentSize.Y)
+end
+
 function m.new(tab: types.Tab, name: string, side: types.SectionSide, order: number): types.Section
     local frame = Instance.new("Frame")
     frame.Name = name
@@ -40,17 +44,15 @@ function m.new(tab: types.Tab, name: string, side: types.SectionSide, order: num
     layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
     layout.Padding = UDim.new(0, 6)
     layout.Parent = content
+    self.layout = layout
     local padding = Instance.new("UIPadding")
     padding.PaddingLeft = UDim.new(0, 8)
     padding.PaddingRight = UDim.new(0, 8)
     padding.PaddingTop = UDim.new(0, 8)
     padding.PaddingBottom = UDim.new(0, 8)
     padding.Parent = content
-    local function updateHeight()
-        frame.Size = UDim2.new(1, 0, 0, 40 + layout.AbsoluteContentSize.Y)
-    end
-    self.scope:Connect(layout:GetPropertyChangedSignal("AbsoluteContentSize"), updateHeight)
-    updateHeight()
+    self.scope:Connect(layout:GetPropertyChangedSignal("AbsoluteContentSize"), function() updateHeight(self) end)
+    updateHeight(self)
     return container.attach(self)
 end
 

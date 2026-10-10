@@ -13,6 +13,46 @@ local dragUtil = require("./util/Drag")
 
 local g = getgenv()
 
+function m:SetVisible(value)
+    self.guis.ScreenGui.Enabled = value
+end
+
+function m:_startMove()
+    local root = self.guis.Root
+    self.moveStart = root.Position
+    self.moveScale = dragUtil.scale(root.Parent)
+end
+
+function m:_move(delta)
+    local root = self.guis.Root
+    local start = self.moveStart
+    root.Position = UDim2.new(
+        start.X.Scale, start.X.Offset + delta.X / self.moveScale,
+        start.Y.Scale, start.Y.Offset + delta.Y / self.moveScale
+    )
+end
+
+function m:_startResize()
+    local root = self.guis.Root
+    self.resizeScale = dragUtil.scale(root)
+    self.parentScale = dragUtil.scale(root.Parent)
+    self.sizeStart = Vector2.new(root.AbsoluteSize.X / self.resizeScale, root.AbsoluteSize.Y / self.resizeScale)
+    self.positionStart = root.Position
+end
+
+function m:_resize(delta)
+    local root = self.guis.Root
+    local width = math.max(self.minimum.X, self.sizeStart.X + delta.X / self.resizeScale)
+    local height = math.max(self.minimum.Y, self.sizeStart.Y + delta.Y / self.resizeScale)
+    root.Size = UDim2.fromOffset(width, height)
+    root.Position = UDim2.new(
+        self.positionStart.X.Scale,
+        self.positionStart.X.Offset + (width - self.sizeStart.X) * self.resizeScale / self.parentScale * root.AnchorPoint.X,
+        self.positionStart.Y.Scale,
+        self.positionStart.Y.Offset + (height - self.sizeStart.Y) * self.resizeScale / self.parentScale * root.AnchorPoint.Y
+    )
+end
+
 function m._createTopbar(self, root: Frame): Frame
     local frame = Instance.new("Frame")
     frame.Name = "Topbar"
@@ -22,18 +62,7 @@ function m._createTopbar(self, root: Frame): Frame
     frame.Parent = root
     frame.ZIndex = 10
 
-    local startPosition, scale
-    dragUtil.attach(self.scope, frame, function()
-        startPosition = root.Position
-        scale = dragUtil.scale(root.Parent)
-    end, function(delta)
-        root.Position = UDim2.new(
-            startPosition.X.Scale,
-            startPosition.X.Offset + delta.X / scale,
-            startPosition.Y.Scale,
-            startPosition.Y.Offset + delta.Y / scale
-        )
-    end)
+    dragUtil.attach(self.scope, frame, function() self:_startMove() end, function(delta) self:_move(delta) end)
 
     local uiPadding = Instance.new("UIPadding")
     uiPadding.PaddingLeft = UDim.new(0, 5)
@@ -129,6 +158,7 @@ function m.new(opts: types.WindowOpts?): types.Window
     root.ZIndex = 5
     local minimum = (opts and opts.minSize) or Vector2.new(400, 260)
     minimum = Vector2.new(math.max(400, minimum.X), math.max(260, minimum.Y))
+    self.minimum = minimum
     local constraint = Instance.new("UISizeConstraint")
     constraint.MinSize = minimum
     constraint.Parent = root
@@ -148,7 +178,7 @@ function m.new(opts: types.WindowOpts?): types.Window
         if g.simpleuiWindow == self then g.simpleuiWindow = nil g.ui = nil end
     end)
     self.currentTab = nil
-    self.SetVisible = function(_, value) sgui.Enabled = value end
+    self.SetVisible = m.SetVisible
     local resize = Instance.new("Frame")
     resize.Name = "Resize"
     resize.Size = UDim2.fromOffset(16, 16)
@@ -156,21 +186,7 @@ function m.new(opts: types.WindowOpts?): types.Window
     resize.BackgroundColor3 = colors.sectionHeader
     resize.ZIndex = 200
     resize.Parent = root
-    local sizeStart, positionStart, scale, parentScale
-    dragUtil.attach(self.scope, resize, function()
-        scale = dragUtil.scale(root)
-        parentScale = dragUtil.scale(root.Parent)
-        sizeStart = Vector2.new(root.AbsoluteSize.X / scale, root.AbsoluteSize.Y / scale)
-        positionStart = root.Position
-    end, function(delta)
-        local width = math.max(minimum.X, sizeStart.X + delta.X / scale)
-        local height = math.max(minimum.Y, sizeStart.Y + delta.Y / scale)
-        root.Size = UDim2.fromOffset(width, height)
-        root.Position = UDim2.new(
-            positionStart.X.Scale, positionStart.X.Offset + (width - sizeStart.X) * scale / parentScale * root.AnchorPoint.X,
-            positionStart.Y.Scale, positionStart.Y.Offset + (height - sizeStart.Y) * scale / parentScale * root.AnchorPoint.Y
-        )
-    end)
+    dragUtil.attach(self.scope, resize, function() self:_startResize() end, function(delta) self:_resize(delta) end)
     return self :: types.Window
 end
 

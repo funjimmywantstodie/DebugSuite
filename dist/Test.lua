@@ -468,6 +468,29 @@ end function __DARKLUA_BUNDLE_MODULES.d():typeof(__modImpl())local v=__DARKLUA_B
 local m = {}
 local scope = __DARKLUA_BUNDLE_MODULES.d()
 
+local function setVisible(self, value: boolean)
+    self.frame.Visible = value
+end
+
+local function clear(self)
+    while #self.components > 0 do
+        self.components[#self.components]:Destroy()
+    end
+end
+
+local function destroy(self, skipFrame)
+    if self.destroyed then return end
+    self.destroyed = true
+    self:Clear()
+    self.scope:Destroy()
+    if not skipFrame then self.frame:Destroy() end
+    if self.owner then
+        local index = table.find(self.owner.components, self)
+        if index then table.remove(self.owner.components, index) end
+        if self.owner.onRemove then self.owner.onRemove(index) end
+    end
+end
+
 function m.attach(self, frame, owner)
     self.frame = frame
     self.scope = scope.new()
@@ -476,30 +499,9 @@ function m.attach(self, frame, owner)
     self.owner = owner
     self.destroyed = false
 
-    function self:SetVisible(value: boolean)
-        self.frame.Visible = value
-    end
-
-    if not self.Clear then
-        function self:Clear()
-            while #self.components > 0 do
-                self.components[#self.components]:Destroy()
-            end
-        end
-    end
-
-    function self:Destroy(skipFrame)
-        if self.destroyed then return end
-        self.destroyed = true
-        self:Clear()
-        self.scope:Destroy()
-        if not skipFrame then self.frame:Destroy() end
-        if self.owner then
-            local index = table.find(self.owner.components, self)
-            if index then table.remove(self.owner.components, index) end
-            if self.owner.onRemove then self.owner.onRemove(index) end
-        end
-    end
+    self.SetVisible = setVisible
+    if not self.Clear then self.Clear = clear end
+    self.Destroy = destroy
 
     self.scope:Connect(frame.Destroying, function() self:Destroy(true) end)
     return self
@@ -516,6 +518,47 @@ end function __DARKLUA_BUNDLE_MODULES.e():typeof(__modImpl())local v=__DARKLUA_B
 local m = {}
 local ui = __DARKLUA_BUNDLE_MODULES.c()
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
+local buttonMethods = {}
+local textboxMethods = {}
+
+function buttonMethods:SetText(value: string)
+    self.button.Text = value
+end
+
+function buttonMethods:SetEnabled(value: boolean)
+    self.enabled = value
+    self.button.Active = value
+    self.button.AutoButtonColor = value
+    self.button.TextTransparency = if value then 0 else 0.5
+end
+
+function textboxMethods:GetValue(): string
+    return self.button.Text
+end
+
+function textboxMethods:SetValue(value: string)
+    self.button.Text = value
+end
+
+function textboxMethods:SetPlaceholder(value: string)
+    self.button.PlaceholderText = value
+end
+
+function textboxMethods:SetEnabled(value: boolean)
+    self.button.TextEditable = value
+end
+
+function textboxMethods:Focus()
+    self.button:CaptureFocus()
+end
+
+function textboxMethods:OnChanged(callback)
+    return self.scope:Connect(self.changed.Event, callback)
+end
+
+function textboxMethods:OnSubmitted(callback)
+    return self.scope:Connect(self.submitted.Event, callback)
+end
 
 function m.button(owner, opts, callback, parent)
     local gui = ui.createButton(parent or owner.contentFrame, opts)
@@ -523,17 +566,7 @@ function m.button(owner, opts, callback, parent)
     self.scope:Connect(gui.MouseButton1Click, function()
         if self.enabled and self.callback then self.callback() end
     end)
-
-    function self:SetText(value: string)
-        gui.Text = value
-    end
-
-    function self:SetEnabled(value: boolean)
-        self.enabled = value
-        gui.Active = value
-        gui.AutoButtonColor = value
-        gui.TextTransparency = if value then 0 else 0.5
-    end
+    for name, method in buttonMethods do self[name] = method end
 
     return self
 end
@@ -542,45 +575,18 @@ function m.textbox(owner, opts, callback, parent)
     local gui = ui.createTextbox(parent or owner.contentFrame, opts)
     gui.ClearTextOnFocus = false
     local self = lifecycle.attach({ button = gui, callback = callback }, gui, owner)
-    local changed = lifecycle.event(self)
-    local submitted = lifecycle.event(self)
+    self.changed = lifecycle.event(self)
+    self.submitted = lifecycle.event(self)
     self.scope:Connect(gui:GetPropertyChangedSignal("Text"), function()
-        changed:Fire(gui.Text)
+        self.changed:Fire(gui.Text)
     end)
     self.scope:Connect(gui.FocusLost, function(enterPressed)
         if enterPressed then
             if self.callback then self.callback(gui.Text) end
-            submitted:Fire(gui.Text)
+            self.submitted:Fire(gui.Text)
         end
     end)
-
-    function self:GetValue(): string
-        return gui.Text
-    end
-
-    function self:SetValue(value: string)
-        gui.Text = value
-    end
-
-    function self:SetPlaceholder(value: string)
-        gui.PlaceholderText = value
-    end
-
-    function self:SetEnabled(value: boolean)
-        gui.TextEditable = value
-    end
-
-    function self:Focus()
-        gui:CaptureFocus()
-    end
-
-    function self:OnChanged(callback)
-        return self.scope:Connect(changed.Event, callback)
-    end
-
-    function self:OnSubmitted(callback)
-        return self.scope:Connect(submitted.Event, callback)
-    end
+    for name, method in textboxMethods do self[name] = method end
 
     return self
 end
@@ -642,6 +648,11 @@ local function add(self, component, opts)
     return component
 end
 
+local function onRemove(self, index)
+    if index then table.remove(self.componentWidths, index) end
+    updateWidths(self)
+end
+
 function m.new(owner: Container__DARKLUA_TYPE_A, opts: RowOpts__DARKLUA_TYPE_g?): Row__DARKLUA_TYPE_D    
 local options = opts or {}
     local frame = Instance.new("Frame")
@@ -661,10 +672,7 @@ local options = opts or {}
     layout.VerticalAlignment = Enum.VerticalAlignment.Center
     layout.Padding = UDim.new(0, self.gap)
     layout.Parent = frame
-    self.onRemove = function(index)
-        if index then table.remove(self.componentWidths, index) end
-        updateWidths(self)
-    end
+    self.onRemove = function(index) onRemove(self, index) end
     self.scope:Connect(frame:GetPropertyChangedSignal("AbsoluteSize"), function() updateWidths(self) end)
     return self
 end
@@ -992,6 +1000,44 @@ local m = {}
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
 local colors = __DARKLUA_BUNDLE_MODULES.a()
 local dragUtil = __DARKLUA_BUNDLE_MODULES.m()
+m.__index = m
+
+function m:SetRatio(value: number)
+    local frame = self.frame
+    local first, second, divider = self.first.frame, self.second.frame, self.divider
+    local vertical = self.vertical
+    local scale = dragUtil.scale(frame)
+    local length = (if vertical then frame.AbsoluteSize.Y else frame.AbsoluteSize.X) / scale
+    local minimum = math.min(self.minSize, math.max(0, (length - 6) / 2))
+    local available = math.max(0, length - 6)
+    local position = math.clamp(available * value, minimum, math.max(minimum, available - minimum))
+    self.ratio = if available > 0 then position / available else value
+    if vertical then
+        first.Size = UDim2.new(1, 0, 0, position)
+        divider.Position = UDim2.fromOffset(0, position)
+        divider.Size = UDim2.new(1, 0, 0, 6)
+        second.Position = UDim2.fromOffset(0, position + 6)
+        second.Size = UDim2.new(1, 0, 1, -position - 6)
+    else
+        first.Size = UDim2.new(0, position, 1, 0)
+        divider.Position = UDim2.fromOffset(position, 0)
+        divider.Size = UDim2.new(0, 6, 1, 0)
+        second.Position = UDim2.fromOffset(position + 6, 0)
+        second.Size = UDim2.new(1, -position - 6, 1, 0)
+    end
+end
+
+function m:_startDrag()
+    self.dragScale = dragUtil.scale(self.frame)
+    local length = (if self.vertical then self.frame.AbsoluteSize.Y else self.frame.AbsoluteSize.X) / self.dragScale
+    self.dragAvailable = math.max(1, length - 6)
+    self.dragStart = self.ratio * self.dragAvailable
+end
+
+function m:_drag(delta)
+    local offset = (if self.vertical then delta.Y else delta.X) / self.dragScale
+    self:SetRatio((self.dragStart + offset) / self.dragAvailable)
+end
 
 function m.new(owner, opts)
     opts = opts or {}
@@ -1001,9 +1047,11 @@ function m.new(owner, opts)
     frame.Size = opts.size or UDim2.new(1, 0, 0, opts.height or 320)
     frame.ZIndex = owner.contentFrame.ZIndex + 1
     frame.Parent = owner.contentFrame
-    local self = lifecycle.attach({}, frame, owner)
+    local self = lifecycle.attach(setmetatable({}, m), frame, owner)
     self.ratio = opts.ratio or 0.5
     local vertical = opts.vertical or false
+    self.vertical = vertical
+    self.minSize = opts.minSize or 80
     local first = Instance.new("Frame")
     first.Name = "First"
     first.BackgroundTransparency = 1
@@ -1020,39 +1068,9 @@ function m.new(owner, opts)
     divider.BorderSizePixel = 0
     divider.ZIndex = frame.ZIndex + 2
     divider.Parent = frame
+    self.divider = divider
 
-    function self:SetRatio(value: number)
-        local scale = dragUtil.scale(frame)
-        local length = (if vertical then frame.AbsoluteSize.Y else frame.AbsoluteSize.X) / scale
-        local minimum = math.min(opts.minSize or 80, math.max(0, (length - 6) / 2))
-        local available = math.max(0, length - 6)
-        local position = math.clamp(available * value, minimum, math.max(minimum, available - minimum))
-        self.ratio = if available > 0 then position / available else value
-        if vertical then
-            first.Size = UDim2.new(1, 0, 0, position)
-            divider.Position = UDim2.fromOffset(0, position)
-            divider.Size = UDim2.new(1, 0, 0, 6)
-            second.Position = UDim2.fromOffset(0, position + 6)
-            second.Size = UDim2.new(1, 0, 1, -position - 6)
-        else
-            first.Size = UDim2.new(0, position, 1, 0)
-            divider.Position = UDim2.fromOffset(position, 0)
-            divider.Size = UDim2.new(0, 6, 1, 0)
-            second.Position = UDim2.fromOffset(position + 6, 0)
-            second.Size = UDim2.new(1, -position - 6, 1, 0)
-        end
-    end
-
-    local start, scale, available
-    dragUtil.attach(self.scope, divider, function()
-        scale = dragUtil.scale(frame)
-        local length = (if vertical then frame.AbsoluteSize.Y else frame.AbsoluteSize.X) / scale
-        available = math.max(1, length - 6)
-        start = self.ratio * available
-    end, function(delta)
-        local offset = (if vertical then delta.Y else delta.X) / scale
-        self:SetRatio((start + offset) / available)
-    end)
+    dragUtil.attach(self.scope, divider, function() self:_startDrag() end, function(delta) self:_drag(delta) end)
     self.scope:Connect(frame:GetPropertyChangedSignal("AbsoluteSize"), function() self:SetRatio(self.ratio) end)
     self:SetRatio(self.ratio)
     return self
@@ -1295,39 +1313,40 @@ local ui = __DARKLUA_BUNDLE_MODULES.c()
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
 local scope = __DARKLUA_BUNDLE_MODULES.d()
 
+local function validateVisit(children, ancestors, loaded, seen)
+    for _, node in children do
+        if not ancestors[node] then
+            assert(type(node.id) == "string" or type(node.id) == "number", "tree nodes need ids")
+            assert(not seen[node.id], "tree nodes need unique ids")
+            seen[node.id] = true
+            local path = table.clone(ancestors)
+            path[node] = true
+            validateVisit(loaded[node.id] or node.children or {}, path, loaded, seen)
+        end
+    end
+end
+
 local function validate(nodes, loaded)
-    local seen = {}
-    local function visit(children, ancestors)
-        for _, node in children do
-            if not ancestors[node] then
-                assert(type(node.id) == "string" or type(node.id) == "number", "tree nodes need ids")
-                assert(not seen[node.id], "tree nodes need unique ids")
-                seen[node.id] = true
+    validateVisit(nodes, {}, loaded, {})
+end
+
+local function flattenVisit(self, nodes, depth, ancestors)
+    if depth > self.maxDepth then return end
+    for _, node in nodes do
+        if not ancestors[node] then
+            table.insert(self.visibleNodes, { node = node, depth = depth })
+            if self.expanded[node.id] then
                 local path = table.clone(ancestors)
                 path[node] = true
-                visit(loaded[node.id] or node.children or {}, path)
+                flattenVisit(self, self.loaded[node.id] or node.children or {}, depth + 1, path)
             end
         end
     end
-    visit(nodes, {})
 end
 
 local function flatten(self)
     self.visibleNodes = {}
-    local function visit(nodes, depth, ancestors)
-        if depth > self.maxDepth then return end
-        for _, node in nodes do
-            if not ancestors[node] then
-                table.insert(self.visibleNodes, { node = node, depth = depth })
-                if self.expanded[node.id] then
-                    local path = table.clone(ancestors)
-                    path[node] = true
-                    visit(self.loaded[node.id] or node.children or {}, depth + 1, path)
-                end
-            end
-        end
-    end
-    visit(self.nodes, 0, {})
+    flattenVisit(self, self.nodes, 0, {})
 end
 
 local function render(self)
@@ -1482,10 +1501,37 @@ local ui = __DARKLUA_BUNDLE_MODULES.c()
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
 local colors = __DARKLUA_BUNDLE_MODULES.a()
 local syntaxHighlight = __DARKLUA_BUNDLE_MODULES.j()
+m.__index = m
+
+function m:render()
+    self.highlightLabel.Visible = self.highlighted
+    self.textbox.TextTransparency = self.highlighted and 1 or 0
+    self.highlightLabel.Text = self.highlighted and syntaxHighlight.Highlight(self.textbox.Text, self.syntaxTheme) or ""
+end
+
+function m:SetSyntax(value)
+    self.highlighted = syntaxHighlight.ValidateSyntax(value)
+    self:render()
+end
+
+function m:SetText(value: string)
+    self.textbox.Text = value
+end
+
+function m:GetText(): string
+    return self.textbox.Text
+end
+
+function m:OnChanged(callback)
+    return self.scope:Connect(self.changed.Event, callback)
+end
+
+function m:Clear()
+    self.textbox.Text = ""
+end
 
 function m.new(owner, opts)
     opts = opts or {}
-    local highlighted = syntaxHighlight.ValidateSyntax(opts.syntax)
     local frame = Instance.new("ScrollingFrame")
     frame.Name = "TextViewer"
     frame.BackgroundColor3 = colors.console.background
@@ -1502,7 +1548,9 @@ function m.new(owner, opts)
     padding.PaddingTop = UDim.new(0, 8)
     padding.PaddingBottom = UDim.new(0, 8)
     padding.Parent = frame
-    local self = lifecycle.attach({}, frame, owner)
+    local self = lifecycle.attach(setmetatable({}, m), frame, owner)
+    self.highlighted = syntaxHighlight.ValidateSyntax(opts.syntax)
+    self.syntaxTheme = opts.syntaxTheme
     local text = ui.createTextbox(frame, { text = "" })
     text.BackgroundTransparency = 1
     text.BorderSizePixel = 0
@@ -1535,40 +1583,14 @@ function m.new(owner, opts)
     display.ZIndex = text.ZIndex + 1
     display.Parent = text
     self.highlightLabel = display
-    local function render()
-        display.Visible = highlighted
-        text.TextTransparency = display.Visible and 1 or 0
-        display.Text = highlighted and syntaxHighlight.Highlight(text.Text, opts.syntaxTheme) or ""
-    end
-    local changed = lifecycle.event(self)
+    self.changed = lifecycle.event(self)
     self.scope:Connect(text:GetPropertyChangedSignal("Text"), function()
-        render()
-        changed:Fire(text.Text)
+        self:render()
+        self.changed:Fire(text.Text)
     end)
 
-    function self:SetSyntax(value)
-        highlighted = syntaxHighlight.ValidateSyntax(value)
-        render()
-    end
-
-    function self:SetText(value: string)
-        text.Text = value
-    end
-
-    function self:GetText(): string
-        return text.Text
-    end
-
-    function self:OnChanged(callback)
-        return self.scope:Connect(changed.Event, callback)
-    end
-
-    function self:Clear()
-        text.Text = ""
-    end
-
     self:SetText(opts.text or "")
-    render()
+    self:render()
     return self
 end
 
@@ -1577,29 +1599,36 @@ end function __DARKLUA_BUNDLE_MODULES.q():typeof(__modImpl())local v=__DARKLUA_B
 local m = {}
 local controls = __DARKLUA_BUNDLE_MODULES.f()
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
+m.__index = m
+
+function m:SetValue(value: boolean)
+    if self.value == value then return end
+    self.value = value
+    self.button.Text = (if value then "[x] " else "[ ] ") .. self.label
+    if self.onToggle then self.onToggle(value) end
+    self.changed:Fire(value)
+end
+
+function m:GetValue(): boolean
+    return self.value
+end
+
+function m:OnChanged(fn)
+    return self.scope:Connect(self.changed.Event, fn)
+end
+
+local function toggle(self)
+    self:SetValue(not self.value)
+end
 
 function m.new(owner, opts, callback)
     local self = controls.button(owner, opts)
+    setmetatable(self, m)
     self.value = opts.value or false
-    local changed = lifecycle.event(self)
-
-    function self:SetValue(value: boolean)
-        if self.value == value then return end
-        self.value = value
-        self.button.Text = (if value then "[x] " else "[ ] ") .. opts.text
-        if callback then callback(value) end
-        changed:Fire(value)
-    end
-
-    function self:GetValue(): boolean
-        return self.value
-    end
-
-    function self:OnChanged(fn)
-        return self.scope:Connect(changed.Event, fn)
-    end
-
-    self.callback = function() self:SetValue(not self.value) end
+    self.label = opts.text
+    self.onToggle = callback
+    self.changed = lifecycle.event(self)
+    self.callback = function() toggle(self) end
     self.button.Text = (if self.value then "[x] " else "[ ] ") .. opts.text
     return self
 end
@@ -1608,6 +1637,26 @@ return m
 end function __DARKLUA_BUNDLE_MODULES.r():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.r if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.r=v end return v.c end end do local function __modImpl()
 local m = {}
 local colors = __DARKLUA_BUNDLE_MODULES.a()
+
+local function visible(self)
+    local current = self.popupAnchor
+    while current do
+        if current:IsA("GuiObject") and not current.Visible then return false end
+        if current:IsA("ScreenGui") and not current.Enabled then return false end
+        current = current.Parent
+    end
+    return true
+end
+
+local function setOpen(self, value: boolean)
+    local popup = self.popupFrame
+    self.open = value and self.enabled ~= false and popup.Size.Y.Offset > 0 and visible(self)
+    popup.Visible = self.open
+    self.stateLabel.Text = if self.open then "Close ^" else "Open v"
+    self.frame.Size = UDim2.new(self.frame.Size.X.Scale, self.frame.Size.X.Offset, 0,
+        if self.open then 34 + popup.Size.Y.Offset else 28)
+    if self.updateText then self:updateText() end
+end
 
 function m.attach(self, popup, anchor)
     popup.Parent = self.frame
@@ -1632,31 +1681,15 @@ function m.attach(self, popup, anchor)
     state.ZIndex = anchor.ZIndex + 1
     state.Parent = self.frame
     self.stateLabel = state
+    self.popupFrame = popup
+    self.popupAnchor = anchor
     local input = game:GetService("UserInputService")
     local run = game:GetService("RunService")
 
-    local function visible()
-        local current = anchor
-        while current do
-            if current:IsA("GuiObject") and not current.Visible then return false end
-            if current:IsA("ScreenGui") and not current.Enabled then return false end
-            current = current.Parent
-        end
-        return true
-    end
-
-    function self:SetOpen(value: boolean)
-        self.open = value and self.enabled ~= false and popup.Size.Y.Offset > 0 and visible()
-        popup.Visible = self.open
-        state.Text = if self.open then "Close ^" else "Open v"
-        self.frame.Size = UDim2.new(self.frame.Size.X.Scale, self.frame.Size.X.Offset, 0,
-            if self.open then 34 + popup.Size.Y.Offset else 28)
-        if self.updateText then self.updateText() end
-    end
-
+    self.SetOpen = setOpen
     self:SetOpen(false)
     self.scope:Connect(run.RenderStepped, function()
-        if self.open and not visible() then self:SetOpen(false) end
+        if self.open and not visible(self) then self:SetOpen(false) end
     end)
     self.scope:Connect(input.InputBegan, function(key)
         if self.open and key.KeyCode == Enum.KeyCode.Escape then self:SetOpen(false) end
@@ -1671,6 +1704,67 @@ local ui = __DARKLUA_BUNDLE_MODULES.c()
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
 local scope = __DARKLUA_BUNDLE_MODULES.d()
 local popupUtil = __DARKLUA_BUNDLE_MODULES.s()
+m.__index = m
+
+function m:updateText()
+    self.button.Text = self.label .. (if self.value then ": " .. self.value else ": select")
+    for _, item in self.items do
+        local selected = item.value == self.value
+        item.button.Text = item.value .. (if selected then "  (selected)" else "")
+        item.button.BackgroundColor3 = if selected then colors.sectionHeader else colors.component
+    end
+end
+
+function m:SetValue(value: string?)
+    assert(value == nil or table.find(self.options, value), "unknown dropdown value")
+    local different = self.value ~= value
+    self.value = value
+    self:SetOpen(false)
+    if different then
+        if self.callback then self.callback(value) end
+        self.changed:Fire(value)
+    end
+end
+
+function m:GetValue()
+    return self.value
+end
+
+function m:SetEnabled(value: boolean)
+    self.enabled = value
+    self.button.Active = value
+    self.button.AutoButtonColor = value
+    if not value then self:SetOpen(false) end
+end
+
+function m:SetOptions(options)
+    self.optionScope:Destroy()
+    self.optionScope = scope.new()
+    for _, child in self.popup:GetChildren() do child:Destroy() end
+    self.items = {}
+    self.options = table.clone(options)
+    local height = if #options > 0 then #options * 34 + 10 else 0
+    self.popup.CanvasSize = UDim2.fromOffset(0, height)
+    self.popup.Size = UDim2.new(1, -16, 0, math.min(180, height))
+    self.popup.ScrollBarThickness = if height > 180 then 6 else 0
+    for i, value in options do
+        local item = ui.createButton(self.popup, { text = value }, self.popup.ZIndex + 1)
+        item.Position = UDim2.fromOffset(8, 8 + (i - 1) * 34)
+        item.Size = UDim2.new(1, if height > 180 then -24 else -16, 0, 28)
+        item.TextXAlignment = Enum.TextXAlignment.Left
+        local padding = Instance.new("UIPadding")
+        padding.PaddingLeft = UDim.new(0, 8)
+        padding.PaddingRight = UDim.new(0, 8)
+        padding.Parent = item
+        table.insert(self.items, { button = item, value = value })
+        self.optionScope:Connect(item.MouseButton1Click, function() if self.enabled then self:SetValue(value) end end)
+    end
+    self:SetValue(if table.find(options, self.value) then self.value else nil)
+end
+
+function m:OnChanged(fn)
+    return self.scope:Connect(self.changed.Event, fn)
+end
 
 function m.new(owner, opts, callback)
     local frame = Instance.new("Frame")
@@ -1679,7 +1773,9 @@ function m.new(owner, opts, callback)
     frame.Size = UDim2.new(1, 0, 0, 28)
     frame.ZIndex = owner.contentFrame.ZIndex + 1
     frame.Parent = owner.contentFrame
-    local self = lifecycle.attach({}, frame, owner)
+    local self = lifecycle.attach(setmetatable({}, m), frame, owner)
+    self.label = opts.text
+    self.callback = callback
     self.options = opts.options or {}
     self.value = opts.value
     self.items = {}
@@ -1697,70 +1793,12 @@ function m.new(owner, opts, callback)
     popup.ScrollBarThickness = 6
     popup.CanvasSize = UDim2.fromOffset(0, #self.options * 28)
     popup.Parent = frame
-    local changed = lifecycle.event(self)
+    self.popup = popup
+    self.changed = lifecycle.event(self)
     self.optionScope = scope.new()
     self.scope:Add(function() self.optionScope:Destroy() end)
 
-    self.updateText = function()
-        button.Text = opts.text .. (if self.value then ": " .. self.value else ": select")
-        for _, item in self.items do
-            local selected = item.value == self.value
-            item.button.Text = item.value .. (if selected then "  (selected)" else "")
-            item.button.BackgroundColor3 = if selected then colors.sectionHeader else colors.component
-        end
-    end
     popupUtil.attach(self, popup, button)
-
-    function self:SetValue(value: string?)
-        assert(value == nil or table.find(self.options, value), "unknown dropdown value")
-        local different = self.value ~= value
-        self.value = value
-        self:SetOpen(false)
-        if different then
-            if callback then callback(value) end
-            changed:Fire(value)
-        end
-    end
-
-    function self:GetValue()
-        return self.value
-    end
-
-    function self:SetEnabled(value: boolean)
-        self.enabled = value
-        button.Active = value
-        button.AutoButtonColor = value
-        if not value then self:SetOpen(false) end
-    end
-
-    function self:SetOptions(options)
-        self.optionScope:Destroy()
-        self.optionScope = scope.new()
-        for _, child in popup:GetChildren() do child:Destroy() end
-        self.items = {}
-        self.options = table.clone(options)
-        local height = if #options > 0 then #options * 34 + 10 else 0
-        popup.CanvasSize = UDim2.fromOffset(0, height)
-        popup.Size = UDim2.new(1, -16, 0, math.min(180, height))
-        popup.ScrollBarThickness = if height > 180 then 6 else 0
-        for i, value in options do
-            local item = ui.createButton(popup, { text = value }, popup.ZIndex + 1)
-            item.Position = UDim2.fromOffset(8, 8 + (i - 1) * 34)
-            item.Size = UDim2.new(1, if height > 180 then -24 else -16, 0, 28)
-            item.TextXAlignment = Enum.TextXAlignment.Left
-            local padding = Instance.new("UIPadding")
-            padding.PaddingLeft = UDim.new(0, 8)
-            padding.PaddingRight = UDim.new(0, 8)
-            padding.Parent = item
-            table.insert(self.items, { button = item, value = value })
-            self.optionScope:Connect(item.MouseButton1Click, function() if self.enabled then self:SetValue(value) end end)
-        end
-        self:SetValue(if table.find(options, self.value) then self.value else nil)
-    end
-
-    function self:OnChanged(fn)
-        return self.scope:Connect(changed.Event, fn)
-    end
 
     self.scope:Connect(button.MouseButton1Click, function() self:SetOpen(not self.open) end)
     self.scope:Connect(frame:GetPropertyChangedSignal("Visible"), function()
@@ -1776,6 +1814,24 @@ local m = {}
 local ui = __DARKLUA_BUNDLE_MODULES.c()
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
 local popupUtil = __DARKLUA_BUNDLE_MODULES.s()
+m.__index = m
+
+function m:updateText()
+    self.button.Text = self.text
+end
+
+function m:SetText(value: string)
+    self.text = value
+    self:updateText()
+end
+
+function m:SetEnabled(value: boolean)
+    self.enabled = value
+    self.button.Active = value
+    self.button.AutoButtonColor = value
+    self.button.TextTransparency = if value then 0 else 0.5
+    if not value then self:SetOpen(false) end
+end
 
 function m.new(owner, opts)
     local frame = Instance.new("Frame")
@@ -1784,13 +1840,10 @@ function m.new(owner, opts)
     frame.Size = UDim2.new(1, 0, 0, 28)
     frame.ZIndex = owner.contentFrame.ZIndex + 1
     frame.Parent = owner.contentFrame
-    local self = lifecycle.attach({ enabled = true }, frame, owner)
+    local self = lifecycle.attach(setmetatable({ enabled = true }, m), frame, owner)
     local button = ui.createButton(frame, opts)
     self.button = button
-    local text = opts.text
-    self.updateText = function()
-        button.Text = text
-    end
+    self.text = opts.text
     local popup = Instance.new("Frame")
     popup.BackgroundTransparency = 1
     popup.BorderSizePixel = 0
@@ -1816,19 +1869,6 @@ function m.new(owner, opts)
         end)
     end
 
-    function self:SetText(value: string)
-        text = value
-        self.updateText()
-    end
-
-    function self:SetEnabled(value: boolean)
-        self.enabled = value
-        button.Active = value
-        button.AutoButtonColor = value
-        button.TextTransparency = if value then 0 else 0.5
-        if not value then self:SetOpen(false) end
-    end
-
     self.callback = function() self:SetOpen(not self.open) end
     self.scope:Connect(button.MouseButton1Click, function()
         if self.enabled then self.callback() end
@@ -1851,66 +1891,71 @@ local viewer = __DARKLUA_BUNDLE_MODULES.q()
 local toggle = __DARKLUA_BUNDLE_MODULES.r()
 local dropdown = __DARKLUA_BUNDLE_MODULES.t()
 local menu = __DARKLUA_BUNDLE_MODULES.u()
+m.__index = m
+
+local function add(self, component)
+    self.nextOrder = (self.nextOrder or 0) + 1
+    component.frame.LayoutOrder = self.nextOrder
+    table.insert(self.components, component)
+    return component
+end
+
+function m:NewButton(opts, callback)
+    return add(self, button.new(self, opts, callback))
+end
+
+function m:NewTextbox(opts, callback)
+    return add(self, textbox.new(self, opts, callback))
+end
+
+function m:NewRow(opts)
+    return add(self, row.new(self, opts))
+end
+
+function m:NewConsole(opts)
+    return add(self, console.new(self, opts))
+end
+
+function m:NewPanel(opts)
+    return add(self, m.attach(panel.new(self, opts)))
+end
+
+function m:NewSplitPane(opts)
+    local component = split.new(self, opts)
+    m.attach(component.first)
+    m.attach(component.second)
+    return add(self, component)
+end
+
+function m:NewList(opts)
+    return add(self, list.new(self, opts))
+end
+
+function m:NewTree(opts)
+    return add(self, tree.new(self, opts))
+end
+
+function m:NewTextViewer(opts)
+    return add(self, viewer.new(self, opts))
+end
+
+function m:NewToggle(opts, callback)
+    return add(self, toggle.new(self, opts, callback))
+end
+
+function m:NewDropdown(opts, callback)
+    return add(self, dropdown.new(self, opts, callback))
+end
+
+function m:NewMenu(opts)
+    return add(self, menu.new(self, opts))
+end
 
 function m.attach(self)
-    local function add(component)
-        self.nextOrder = (self.nextOrder or 0) + 1
-        component.frame.LayoutOrder = self.nextOrder
-        table.insert(self.components, component)
-        return component
+    -- Preserve the instance's existing methods (for example, a custom Clear).
+    for name, method in m do
+        if name ~= "attach" and self[name] == nil then self[name] = method end
     end
-
-    function self:NewButton(opts, callback)
-        return add(button.new(self, opts, callback))
-    end
-
-    function self:NewTextbox(opts, callback)
-        return add(textbox.new(self, opts, callback))
-    end
-
-    function self:NewRow(opts)
-        return add(row.new(self, opts))
-    end
-
-    function self:NewConsole(opts)
-        return add(console.new(self, opts))
-    end
-
-    function self:NewPanel(opts)
-        return add(m.attach(panel.new(self, opts)))
-    end
-
-    function self:NewSplitPane(opts)
-        local component = split.new(self, opts)
-        m.attach(component.first)
-        m.attach(component.second)
-        return add(component)
-    end
-
-    function self:NewList(opts)
-        return add(list.new(self, opts))
-    end
-
-    function self:NewTree(opts)
-        return add(tree.new(self, opts))
-    end
-
-    function self:NewTextViewer(opts)
-        return add(viewer.new(self, opts))
-    end
-
-    function self:NewToggle(opts, callback)
-        return add(toggle.new(self, opts, callback))
-    end
-
-    function self:NewDropdown(opts, callback)
-        return add(dropdown.new(self, opts, callback))
-    end
-
-    function self:NewMenu(opts)
-        return add(menu.new(self, opts))
-    end
-
     return self
 end
 
@@ -1923,6 +1968,10 @@ local colors = __DARKLUA_BUNDLE_MODULES.a()
 local types = __DARKLUA_BUNDLE_MODULES.b()
 local container = __DARKLUA_BUNDLE_MODULES.v()
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
+
+local function updateHeight(self)
+    self.frame.Size = UDim2.new(1, 0, 0, 40 + self.layout.AbsoluteContentSize.Y)
+end
 
 function m.new(tab: Tab__DARKLUA_TYPE_N, name: string, side: SectionSide__DARKLUA_TYPE_c, order: number): Section__DARKLUA_TYPE_M    
 local frame = Instance.new("Frame")
@@ -1958,17 +2007,15 @@ local frame = Instance.new("Frame")
     layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
     layout.Padding = UDim.new(0, 6)
     layout.Parent = content
+    self.layout = layout
     local padding = Instance.new("UIPadding")
     padding.PaddingLeft = UDim.new(0, 8)
     padding.PaddingRight = UDim.new(0, 8)
     padding.PaddingTop = UDim.new(0, 8)
     padding.PaddingBottom = UDim.new(0, 8)
     padding.Parent = content
-    local function updateHeight()
-        frame.Size = UDim2.new(1, 0, 0, 40 + layout.AbsoluteContentSize.Y)
-    end
-    self.scope:Connect(layout:GetPropertyChangedSignal("AbsoluteContentSize"), updateHeight)
-    updateHeight()
+    self.scope:Connect(layout:GetPropertyChangedSignal("AbsoluteContentSize"), function() updateHeight(self) end)
+    updateHeight(self)
     return container.attach(self)
 end
 
@@ -1983,6 +2030,21 @@ local types = __DARKLUA_BUNDLE_MODULES.b()
 local section = __DARKLUA_BUNDLE_MODULES.w()
 local container = __DARKLUA_BUNDLE_MODULES.v()
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
+
+local function updateRowHeight(row, leftLayout, rightLayout)
+    local height = math.max(leftLayout.AbsoluteContentSize.Y, rightLayout.AbsoluteContentSize.Y)
+    row.Size = UDim2.new(1, 0, 0, height)
+end
+
+function m:Destroy(skipFrame)
+    local window = self.parentWindow
+    local selected = window.currentTab == self
+    if selected then window.currentTab = nil end
+    self.baseDestroy(self, skipFrame)
+    if selected and not window.destroyed and #window.tabs > 0 then
+        window:SelectTab(window.tabs[1])
+    end
+end
 
 local function createTabBar(root: Frame, name: string): TextButton
     local tabBtn = Instance.new("TextButton")
@@ -2071,13 +2133,9 @@ local self = setmetatable({}, m)
         right.Position = UDim2.new(0.5, 3, 0, 0)
 
         -- Reserve space for the taller column before placing bottom sections.
-        local function updateRowHeight()
-            local height = math.max(leftLayout.AbsoluteContentSize.Y, rightLayout.AbsoluteContentSize.Y)
-            row.Size = UDim2.new(1, 0, 0, height)
-        end
-        self.scope:Connect(leftLayout:GetPropertyChangedSignal("AbsoluteContentSize"), updateRowHeight)
-        self.scope:Connect(rightLayout:GetPropertyChangedSignal("AbsoluteContentSize"), updateRowHeight)
-        updateRowHeight()
+        self.scope:Connect(leftLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function() updateRowHeight(row, leftLayout, rightLayout) end)
+        self.scope:Connect(rightLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function() updateRowHeight(row, leftLayout, rightLayout) end)
+        updateRowHeight(row, leftLayout, rightLayout)
 
         local bottom = createArea(content, "Bottom", 2)
         self.columns = {
@@ -2097,15 +2155,8 @@ local self = setmetatable({}, m)
     end)
 
     container.attach(self)
-    local destroy = self.Destroy
-    function self:Destroy(skipFrame)
-        local selected = window.currentTab == self
-        if selected then window.currentTab = nil end
-        destroy(self, skipFrame)
-        if selected and not window.destroyed and #window.tabs > 0 then
-            window:SelectTab(window.tabs[1])
-        end
-    end
+    self.baseDestroy = self.Destroy
+    self.Destroy = m.Destroy
     return self :: Tab__DARKLUA_TYPE_N
 end
 
@@ -2144,6 +2195,46 @@ local dragUtil = __DARKLUA_BUNDLE_MODULES.m()
 
 local g = getgenv()
 
+function m:SetVisible(value)
+    self.guis.ScreenGui.Enabled = value
+end
+
+function m:_startMove()
+    local root = self.guis.Root
+    self.moveStart = root.Position
+    self.moveScale = dragUtil.scale(root.Parent)
+end
+
+function m:_move(delta)
+    local root = self.guis.Root
+    local start = self.moveStart
+    root.Position = UDim2.new(
+        start.X.Scale, start.X.Offset + delta.X / self.moveScale,
+        start.Y.Scale, start.Y.Offset + delta.Y / self.moveScale
+    )
+end
+
+function m:_startResize()
+    local root = self.guis.Root
+    self.resizeScale = dragUtil.scale(root)
+    self.parentScale = dragUtil.scale(root.Parent)
+    self.sizeStart = Vector2.new(root.AbsoluteSize.X / self.resizeScale, root.AbsoluteSize.Y / self.resizeScale)
+    self.positionStart = root.Position
+end
+
+function m:_resize(delta)
+    local root = self.guis.Root
+    local width = math.max(self.minimum.X, self.sizeStart.X + delta.X / self.resizeScale)
+    local height = math.max(self.minimum.Y, self.sizeStart.Y + delta.Y / self.resizeScale)
+    root.Size = UDim2.fromOffset(width, height)
+    root.Position = UDim2.new(
+        self.positionStart.X.Scale,
+        self.positionStart.X.Offset + (width - self.sizeStart.X) * self.resizeScale / self.parentScale * root.AnchorPoint.X,
+        self.positionStart.Y.Scale,
+        self.positionStart.Y.Offset + (height - self.sizeStart.Y) * self.resizeScale / self.parentScale * root.AnchorPoint.Y
+    )
+end
+
 function m._createTopbar(self, root: Frame): Frame
     local frame = Instance.new("Frame")
     frame.Name = "Topbar"
@@ -2153,18 +2244,7 @@ function m._createTopbar(self, root: Frame): Frame
     frame.Parent = root
     frame.ZIndex = 10
 
-    local startPosition, scale
-    dragUtil.attach(self.scope, frame, function()
-        startPosition = root.Position
-        scale = dragUtil.scale(root.Parent)
-    end, function(delta)
-        root.Position = UDim2.new(
-            startPosition.X.Scale,
-            startPosition.X.Offset + delta.X / scale,
-            startPosition.Y.Scale,
-            startPosition.Y.Offset + delta.Y / scale
-        )
-    end)
+    dragUtil.attach(self.scope, frame, function() self:_startMove() end, function(delta) self:_move(delta) end)
 
     local uiPadding = Instance.new("UIPadding")
     uiPadding.PaddingLeft = UDim.new(0, 5)
@@ -2260,6 +2340,7 @@ if g.simpleuiWindow then
     root.ZIndex = 5
     local minimum = (opts and opts.minSize) or Vector2.new(400, 260)
     minimum = Vector2.new(math.max(400, minimum.X), math.max(260, minimum.Y))
+    self.minimum = minimum
     local constraint = Instance.new("UISizeConstraint")
     constraint.MinSize = minimum
     constraint.Parent = root
@@ -2279,7 +2360,7 @@ if g.simpleuiWindow then
         if g.simpleuiWindow == self then g.simpleuiWindow = nil g.ui = nil end
     end)
     self.currentTab = nil
-    self.SetVisible = function(_, value) sgui.Enabled = value end
+    self.SetVisible = m.SetVisible
     local resize = Instance.new("Frame")
     resize.Name = "Resize"
     resize.Size = UDim2.fromOffset(16, 16)
@@ -2287,21 +2368,7 @@ if g.simpleuiWindow then
     resize.BackgroundColor3 = colors.sectionHeader
     resize.ZIndex = 200
     resize.Parent = root
-    local sizeStart, positionStart, scale, parentScale
-    dragUtil.attach(self.scope, resize, function()
-        scale = dragUtil.scale(root)
-        parentScale = dragUtil.scale(root.Parent)
-        sizeStart = Vector2.new(root.AbsoluteSize.X / scale, root.AbsoluteSize.Y / scale)
-        positionStart = root.Position
-    end, function(delta)
-        local width = math.max(minimum.X, sizeStart.X + delta.X / scale)
-        local height = math.max(minimum.Y, sizeStart.Y + delta.Y / scale)
-        root.Size = UDim2.fromOffset(width, height)
-        root.Position = UDim2.new(
-            positionStart.X.Scale, positionStart.X.Offset + (width - sizeStart.X) * scale / parentScale * root.AnchorPoint.X,
-            positionStart.Y.Scale, positionStart.Y.Offset + (height - sizeStart.Y) * scale / parentScale * root.AnchorPoint.Y
-        )
-    end)
+    dragUtil.attach(self.scope, resize, function() self:_startResize() end, function(delta) self:_resize(delta) end)
     return self :: Window__DARKLUA_TYPE_S
 end
 
@@ -2348,7 +2415,6 @@ end
 return m
 end function __DARKLUA_BUNDLE_MODULES.y():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.y if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.y=v end return v.c end end end
 local Window = __DARKLUA_BUNDLE_MODULES.y()
-local tab = __DARKLUA_BUNDLE_MODULES.x()
 
 local window = Window.new({})
 local testTab = window:NewTab("test")

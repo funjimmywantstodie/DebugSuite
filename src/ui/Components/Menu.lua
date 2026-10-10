@@ -2,6 +2,24 @@ local m = {}
 local ui = require("../util/UIConstructor")
 local lifecycle = require("../util/Lifecycle")
 local popupUtil = require("../util/Popup")
+m.__index = m
+
+function m:updateText()
+    self.button.Text = self.text
+end
+
+function m:SetText(value: string)
+    self.text = value
+    self:updateText()
+end
+
+function m:SetEnabled(value: boolean)
+    self.enabled = value
+    self.button.Active = value
+    self.button.AutoButtonColor = value
+    self.button.TextTransparency = if value then 0 else 0.5
+    if not value then self:SetOpen(false) end
+end
 
 function m.new(owner, opts)
     local frame = Instance.new("Frame")
@@ -10,13 +28,10 @@ function m.new(owner, opts)
     frame.Size = UDim2.new(1, 0, 0, 28)
     frame.ZIndex = owner.contentFrame.ZIndex + 1
     frame.Parent = owner.contentFrame
-    local self = lifecycle.attach({ enabled = true }, frame, owner)
+    local self = lifecycle.attach(setmetatable({ enabled = true }, m), frame, owner)
     local button = ui.createButton(frame, opts)
     self.button = button
-    local text = opts.text
-    self.updateText = function()
-        button.Text = text
-    end
+    self.text = opts.text
     local popup = Instance.new("Frame")
     popup.BackgroundTransparency = 1
     popup.BorderSizePixel = 0
@@ -40,19 +55,6 @@ function m.new(owner, opts)
             self:SetOpen(false)
             item.callback()
         end)
-    end
-
-    function self:SetText(value: string)
-        text = value
-        self.updateText()
-    end
-
-    function self:SetEnabled(value: boolean)
-        self.enabled = value
-        button.Active = value
-        button.AutoButtonColor = value
-        button.TextTransparency = if value then 0 else 0.5
-        if not value then self:SetOpen(false) end
     end
 
     self.callback = function() self:SetOpen(not self.open) end

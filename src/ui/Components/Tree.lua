@@ -6,39 +6,40 @@ local ui = require("../util/UIConstructor")
 local lifecycle = require("../util/Lifecycle")
 local scope = require("../util/Scope")
 
+local function validateVisit(children, ancestors, loaded, seen)
+    for _, node in children do
+        if not ancestors[node] then
+            assert(type(node.id) == "string" or type(node.id) == "number", "tree nodes need ids")
+            assert(not seen[node.id], "tree nodes need unique ids")
+            seen[node.id] = true
+            local path = table.clone(ancestors)
+            path[node] = true
+            validateVisit(loaded[node.id] or node.children or {}, path, loaded, seen)
+        end
+    end
+end
+
 local function validate(nodes, loaded)
-    local seen = {}
-    local function visit(children, ancestors)
-        for _, node in children do
-            if not ancestors[node] then
-                assert(type(node.id) == "string" or type(node.id) == "number", "tree nodes need ids")
-                assert(not seen[node.id], "tree nodes need unique ids")
-                seen[node.id] = true
+    validateVisit(nodes, {}, loaded, {})
+end
+
+local function flattenVisit(self, nodes, depth, ancestors)
+    if depth > self.maxDepth then return end
+    for _, node in nodes do
+        if not ancestors[node] then
+            table.insert(self.visibleNodes, { node = node, depth = depth })
+            if self.expanded[node.id] then
                 local path = table.clone(ancestors)
                 path[node] = true
-                visit(loaded[node.id] or node.children or {}, path)
+                flattenVisit(self, self.loaded[node.id] or node.children or {}, depth + 1, path)
             end
         end
     end
-    visit(nodes, {})
 end
 
 local function flatten(self)
     self.visibleNodes = {}
-    local function visit(nodes, depth, ancestors)
-        if depth > self.maxDepth then return end
-        for _, node in nodes do
-            if not ancestors[node] then
-                table.insert(self.visibleNodes, { node = node, depth = depth })
-                if self.expanded[node.id] then
-                    local path = table.clone(ancestors)
-                    path[node] = true
-                    visit(self.loaded[node.id] or node.children or {}, depth + 1, path)
-                end
-            end
-        end
-    end
-    visit(self.nodes, 0, {})
+    flattenVisit(self, self.nodes, 0, {})
 end
 
 local function render(self)

@@ -33,6 +33,11 @@ local function add(self, component, opts)
     return component
 end
 
+local function onRemove(self, index)
+    if index then table.remove(self.componentWidths, index) end
+    updateWidths(self)
+end
+
 function m.new(owner: types.Container, opts: types.RowOpts?): types.Row
     local options = opts or {}
     local frame = Instance.new("Frame")
@@ -52,10 +57,7 @@ function m.new(owner: types.Container, opts: types.RowOpts?): types.Row
     layout.VerticalAlignment = Enum.VerticalAlignment.Center
     layout.Padding = UDim.new(0, self.gap)
     layout.Parent = frame
-    self.onRemove = function(index)
-        if index then table.remove(self.componentWidths, index) end
-        updateWidths(self)
-    end
+    self.onRemove = function(index) onRemove(self, index) end
     self.scope:Connect(frame:GetPropertyChangedSignal("AbsoluteSize"), function() updateWidths(self) end)
     return self
 end

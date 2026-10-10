@@ -1,6 +1,26 @@
 local m = {}
 local colors = require("../Colors")
 
+local function visible(self)
+    local current = self.popupAnchor
+    while current do
+        if current:IsA("GuiObject") and not current.Visible then return false end
+        if current:IsA("ScreenGui") and not current.Enabled then return false end
+        current = current.Parent
+    end
+    return true
+end
+
+local function setOpen(self, value: boolean)
+    local popup = self.popupFrame
+    self.open = value and self.enabled ~= false and popup.Size.Y.Offset > 0 and visible(self)
+    popup.Visible = self.open
+    self.stateLabel.Text = if self.open then "Close ^" else "Open v"
+    self.frame.Size = UDim2.new(self.frame.Size.X.Scale, self.frame.Size.X.Offset, 0,
+        if self.open then 34 + popup.Size.Y.Offset else 28)
+    if self.updateText then self:updateText() end
+end
+
 function m.attach(self, popup, anchor)
     popup.Parent = self.frame
     popup.Position = UDim2.fromOffset(8, 34)
@@ -24,31 +44,15 @@ function m.attach(self, popup, anchor)
     state.ZIndex = anchor.ZIndex + 1
     state.Parent = self.frame
     self.stateLabel = state
+    self.popupFrame = popup
+    self.popupAnchor = anchor
     local input = game:GetService("UserInputService")
     local run = game:GetService("RunService")
 
-    local function visible()
-        local current = anchor
-        while current do
-            if current:IsA("GuiObject") and not current.Visible then return false end
-            if current:IsA("ScreenGui") and not current.Enabled then return false end
-            current = current.Parent
-        end
-        return true
-    end
-
-    function self:SetOpen(value: boolean)
-        self.open = value and self.enabled ~= false and popup.Size.Y.Offset > 0 and visible()
-        popup.Visible = self.open
-        state.Text = if self.open then "Close ^" else "Open v"
-        self.frame.Size = UDim2.new(self.frame.Size.X.Scale, self.frame.Size.X.Offset, 0,
-            if self.open then 34 + popup.Size.Y.Offset else 28)
-        if self.updateText then self.updateText() end
-    end
-
+    self.SetOpen = setOpen
     self:SetOpen(false)
     self.scope:Connect(run.RenderStepped, function()
-        if self.open and not visible() then self:SetOpen(false) end
+        if self.open and not visible(self) then self:SetOpen(false) end
     end)
     self.scope:Connect(input.InputBegan, function(key)
         if self.open and key.KeyCode == Enum.KeyCode.Escape then self:SetOpen(false) end

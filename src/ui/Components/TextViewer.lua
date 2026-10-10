@@ -3,10 +3,37 @@ local ui = require("../util/UIConstructor")
 local lifecycle = require("../util/Lifecycle")
 local colors = require("../Colors")
 local syntaxHighlight = require("../SyntaxHighlight")
+m.__index = m
+
+function m:render()
+    self.highlightLabel.Visible = self.highlighted
+    self.textbox.TextTransparency = self.highlighted and 1 or 0
+    self.highlightLabel.Text = self.highlighted and syntaxHighlight.Highlight(self.textbox.Text, self.syntaxTheme) or ""
+end
+
+function m:SetSyntax(value)
+    self.highlighted = syntaxHighlight.ValidateSyntax(value)
+    self:render()
+end
+
+function m:SetText(value: string)
+    self.textbox.Text = value
+end
+
+function m:GetText(): string
+    return self.textbox.Text
+end
+
+function m:OnChanged(callback)
+    return self.scope:Connect(self.changed.Event, callback)
+end
+
+function m:Clear()
+    self.textbox.Text = ""
+end
 
 function m.new(owner, opts)
     opts = opts or {}
-    local highlighted = syntaxHighlight.ValidateSyntax(opts.syntax)
     local frame = Instance.new("ScrollingFrame")
     frame.Name = "TextViewer"
     frame.BackgroundColor3 = colors.console.background
@@ -23,7 +50,9 @@ function m.new(owner, opts)
     padding.PaddingTop = UDim.new(0, 8)
     padding.PaddingBottom = UDim.new(0, 8)
     padding.Parent = frame
-    local self = lifecycle.attach({}, frame, owner)
+    local self = lifecycle.attach(setmetatable({}, m), frame, owner)
+    self.highlighted = syntaxHighlight.ValidateSyntax(opts.syntax)
+    self.syntaxTheme = opts.syntaxTheme
     local text = ui.createTextbox(frame, { text = "" })
     text.BackgroundTransparency = 1
     text.BorderSizePixel = 0
@@ -56,40 +85,14 @@ function m.new(owner, opts)
     display.ZIndex = text.ZIndex + 1
     display.Parent = text
     self.highlightLabel = display
-    local function render()
-        display.Visible = highlighted
-        text.TextTransparency = display.Visible and 1 or 0
-        display.Text = highlighted and syntaxHighlight.Highlight(text.Text, opts.syntaxTheme) or ""
-    end
-    local changed = lifecycle.event(self)
+    self.changed = lifecycle.event(self)
     self.scope:Connect(text:GetPropertyChangedSignal("Text"), function()
-        render()
-        changed:Fire(text.Text)
+        self:render()
+        self.changed:Fire(text.Text)
     end)
 
-    function self:SetSyntax(value)
-        highlighted = syntaxHighlight.ValidateSyntax(value)
-        render()
-    end
-
-    function self:SetText(value: string)
-        text.Text = value
-    end
-
-    function self:GetText(): string
-        return text.Text
-    end
-
-    function self:OnChanged(callback)
-        return self.scope:Connect(changed.Event, callback)
-    end
-
-    function self:Clear()
-        text.Text = ""
-    end
-
     self:SetText(opts.text or "")
-    render()
+    self:render()
     return self
 end
 

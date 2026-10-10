@@ -8,6 +8,21 @@ local section = require("./Section")
 local container = require("./Container")
 local lifecycle = require("./util/Lifecycle")
 
+local function updateRowHeight(row, leftLayout, rightLayout)
+    local height = math.max(leftLayout.AbsoluteContentSize.Y, rightLayout.AbsoluteContentSize.Y)
+    row.Size = UDim2.new(1, 0, 0, height)
+end
+
+function m:Destroy(skipFrame)
+    local window = self.parentWindow
+    local selected = window.currentTab == self
+    if selected then window.currentTab = nil end
+    self.baseDestroy(self, skipFrame)
+    if selected and not window.destroyed and #window.tabs > 0 then
+        window:SelectTab(window.tabs[1])
+    end
+end
+
 local function createTabBar(root: Frame, name: string): TextButton
     local tabBtn = Instance.new("TextButton")
     tabBtn.Name = name
@@ -95,13 +110,9 @@ function m.new(window: types.Window, name: string, opts: types.TabOpts?): types.
         right.Position = UDim2.new(0.5, 3, 0, 0)
 
         -- Reserve space for the taller column before placing bottom sections.
-        local function updateRowHeight()
-            local height = math.max(leftLayout.AbsoluteContentSize.Y, rightLayout.AbsoluteContentSize.Y)
-            row.Size = UDim2.new(1, 0, 0, height)
-        end
-        self.scope:Connect(leftLayout:GetPropertyChangedSignal("AbsoluteContentSize"), updateRowHeight)
-        self.scope:Connect(rightLayout:GetPropertyChangedSignal("AbsoluteContentSize"), updateRowHeight)
-        updateRowHeight()
+        self.scope:Connect(leftLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function() updateRowHeight(row, leftLayout, rightLayout) end)
+        self.scope:Connect(rightLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function() updateRowHeight(row, leftLayout, rightLayout) end)
+        updateRowHeight(row, leftLayout, rightLayout)
 
         local bottom = createArea(content, "Bottom", 2)
         self.columns = {
@@ -121,15 +132,8 @@ function m.new(window: types.Window, name: string, opts: types.TabOpts?): types.
     end)
 
     container.attach(self)
-    local destroy = self.Destroy
-    function self:Destroy(skipFrame)
-        local selected = window.currentTab == self
-        if selected then window.currentTab = nil end
-        destroy(self, skipFrame)
-        if selected and not window.destroyed and #window.tabs > 0 then
-            window:SelectTab(window.tabs[1])
-        end
-    end
+    self.baseDestroy = self.Destroy
+    self.Destroy = m.Destroy
     return self :: types.Tab
 end
 

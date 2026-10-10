@@ -1,7 +1,13 @@
 # SimpleUI
 
-Roblox UI components live in `src/ui`. `src/Test.lua` demonstrates windows,
-tabs, sections, and controls. Bundle the demo with:
+Roblox UI components live in `src/ui`. Build the app from `src/main.lua` with:
+
+```sh
+python3 tools/build.py
+```
+
+This writes `dist/DebugSuite.lua`. `src/Test.lua` demonstrates windows,
+tabs, sections, and controls. Bundle that demo separately with:
 
 ```sh
 darklua process src/Test.lua dist/Test.lua

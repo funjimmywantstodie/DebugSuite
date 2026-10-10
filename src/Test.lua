@@ -1,5 +1,4 @@
 local Window = require("./ui/Window")
-local tab = require("./ui/Tab")
 
 local window = Window.new({})
 local testTab = window:NewTab("test")

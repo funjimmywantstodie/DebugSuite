@@ -1,7 +1,3 @@
-
---[[AI]]
-
--- Standalone Lua/Luau lexer and Roblox RichText renderer. No UI instances required.
 local m = {}
 
 m.theme = {
@@ -25,7 +21,7 @@ function m.Escape(value: string): string
     return escaped
 end
 
--- Returns the byte after a long-bracket literal, including unfinished literals.
+--skip to the end of a long string or comment
 local function longBracket(source, position)
     local equals = source:sub(position):match("^%[(=*)%[")
     if not equals then return nil end
@@ -105,7 +101,6 @@ function m.Tokenize(source: string)
     return tokens
 end
 
--- Theme overrides use hex RGB strings, e.g. { keyword = "#FF80AA" }.
 function m.Highlight(source: string, theme): string
     local output = {}
     for _, token in m.Tokenize(source) do

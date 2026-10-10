@@ -2,7 +2,7 @@ local m = {}
 m.__index = m
 
 local colors = require("./Colors")
-local types = require("./Types")
+local types = require("../Types")
 local container = require("./Container")
 local lifecycle = require("./util/Lifecycle")
 

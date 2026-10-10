@@ -1,6 +1,7 @@
 local Window = require("./ui/Window")
 
 local window = Window.new({})
+window:Notify({ text = "Demo ready. Open the console from the topbar.", messageType = "success" })
 local testTab = window:NewTab("test")
 local testTab2 = window:NewTab("test2")
 

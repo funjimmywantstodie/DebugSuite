@@ -3,7 +3,7 @@ m.__index = m
 
 local colors = require("./Colors")
 
-local types = require("./Types")
+local types = require("../Types")
 local section = require("./Section")
 local container = require("./Container")
 local lifecycle = require("./util/Lifecycle")
@@ -91,7 +91,6 @@ function m.new(window: types.Window, name: string, opts: types.TabOpts?): types.
     else
         local content = createArea(self.container, "Sections", 0)
         content.Position = UDim2.fromOffset(5, 5)
-        -- Insets apply to the shared wrapper, including full-width sections.
         content.Size = UDim2.new(1, -10 - self.container.ScrollBarThickness, 0, 0)
         local top = createArea(content, "Top", 0)
 
@@ -109,7 +108,7 @@ function m.new(window: types.Window, name: string, opts: types.TabOpts?): types.
         right.Size = UDim2.new(0.5, -3, 0, 0)
         right.Position = UDim2.new(0.5, 3, 0, 0)
 
-        -- Reserve space for the taller column before placing bottom sections.
+        --use the taller column so the bottom sections dont overlap
         self.scope:Connect(leftLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function() updateRowHeight(row, leftLayout, rightLayout) end)
         self.scope:Connect(rightLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function() updateRowHeight(row, leftLayout, rightLayout) end)
         updateRowHeight(row, leftLayout, rightLayout)

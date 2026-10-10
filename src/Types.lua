@@ -1,3 +1,4 @@
+--ui------
 export type Services = {[string]: Instance?}
 export type ctx = { services: Services }
 export type SectionSide = "left" | "right" | "top" | "bottom" | "full"
@@ -32,6 +33,8 @@ export type SplitPaneOpts = {
 }
 export type ConsoleMessageType = "error" | "warning" | "info" | "success"
 export type ConsoleEntry = { text: string, messageType: ConsoleMessageType? }
+export type NotifyOpts = { text: string, messageType: ConsoleMessageType?, duration: number? }
+export type Notification = Component & { text: string, messageType: ConsoleMessageType }
 export type Syntax = "lua" | "luau" | false
 export type SyntaxTheme = {[string]: string}
 export type SyntaxToken = { kind: string, text: string, start: number, finish: number }
@@ -156,7 +159,17 @@ export type Tab = Container & {
     ShowCurrentTab: (self: Tab) -> (), HideCurrentTab: (self: Tab) -> (),
 }
 export type TabOpts = { layout: ("sections" | "free")? }
-export type WindowOpts = { size: UDim2?, minSize: Vector2? }
+export type WindowOpts = { size: UDim2?, minSize: Vector2?, captureLogs: boolean? }
+export type FloatingWindowOpts = {
+    name: string?, title: string?, size: UDim2?, position: UDim2?, minSize: Vector2?,
+    visible: boolean?, closeBehavior: ("hide" | "destroy")?, backgroundColor: Color3?,
+}
+export type FloatingWindow = Container & {
+    guis: { ScreenGui: ScreenGui, Root: Frame, Topbar: Frame },
+    Show: (self: FloatingWindow) -> (), Hide: (self: FloatingWindow) -> (),
+    Toggle: (self: FloatingWindow) -> (), Focus: (self: FloatingWindow) -> (),
+    AddTopbarButton: (self: FloatingWindow, name: string, text: string, callback: () -> (), width: number?) -> TextButton,
+}
 export type WindowGuis = { ScreenGui: ScreenGui, Root: Frame, Topbar: Frame, Sidebar: ScrollingFrame }
 export type ShortcutOpts = { ctrl: boolean?, shift: boolean? }
 export type Window = {
@@ -166,7 +179,11 @@ export type Window = {
     SetVisible: (self: Window, value: boolean) -> (),
     Clear: (self: Window) -> (), Destroy: (self: Window) -> (),
     NewTab: (self: Window, name: string, opts: TabOpts?) -> Tab,
+    NewWindow: (self: Window, opts: FloatingWindowOpts?) -> FloatingWindow,
     SelectTab: (self: Window, tab: Tab) -> (),
+    OpenConsole: (self: Window) -> Console,
+    Log: (self: Window, text: string, messageType: ConsoleMessageType?) -> (),
+    Notify: (self: Window, opts: NotifyOpts) -> Notification?,
     BindShortcut: (self: Window, key: Enum.KeyCode, callback: () -> (), opts: ShortcutOpts?) -> RBXScriptConnection,
 }
 

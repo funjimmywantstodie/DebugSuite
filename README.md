@@ -13,6 +13,83 @@ tabs, sections, and controls. Bundle that demo separately with:
 darklua process src/Test.lua dist/Test.lua
 ```
 
+## Run locally without pasting the bundle
+
+In `tools/build.py`, optionally set your executor's workspace folder:
+
+```python
+WORKSPACE = r"C:\Users\maxim\AppData\Local\Volt\workspace"
+```
+
+Run `python tools/build.py` after editing the source. It builds
+`dist/DebugSuite.lua` and writes `tools/Bootstrap.lua`. Only `DebugSuite.lua`
+is copied into the workspace when configured. Leave `WORKSPACE = r""`
+to skip the workspace copy.
+
+Paste the contents of [tools/Bootstrap.lua](tools/Bootstrap.lua) into your executor once and save
+it. Run that saved script to load the latest workspace copy through
+`loadfile("DebugSuite.lua")`.
+
+## Notifications and console window
+
+Every window has a **</> Console** topbar button that opens a draggable console.
+Drag its bottom-right corner to resize it (minimum 360 × 200). Click either
+window, including its controls, to bring it to the front. Opening the console
+also focuses it; notifications stay above both windows.
+Blank window areas also accept focus. Only the frontmost window under the
+pointer can begin a drag or resize, and only one drag can run at a time.
+Title-bar action buttons do not start a window drag.
+Closing the console hides it and preserves its history; **Clear** removes entries.
+It keeps the latest 1,000 entries, including messages received while hidden.
+
+```lua
+window:Notify({ text = "Saved", messageType = "success" })
+window:Notify({ text = "Refresh failed\nFull error details", messageType = "error" })
+window:Log("Starting refresh", "info") -- console only
+window:OpenConsole()
+```
+
+Notification levels are `info`, `success`, `warning`, and `error`. Errors stay
+until dismissed; other levels expire after five seconds. Set `duration` in
+seconds to override this (`0` keeps it visible). `Notify` returns a component
+you can dismiss with `:Destroy()`. Up to three notifications remain visible;
+their full, unformatted messages stay in the console. **Details** opens it.
+
+By default, Roblox `LogService.MessageOut` feeds client output into this console;
+errors and warnings also create notifications. This includes output from other
+client scripts. Use `Window.new({ captureLogs = false })` for manual logging only.
+Executor output that bypasses Roblox's LogService requires explicit `Log` or
+`Notify` calls. Destroying or rerunning the window cleans up both overlays and
+the log subscription.
+
+## Additional windows
+
+The main window and console share `src/ui/WindowFrame.lua` for the frame,
+topbar, buttons, dragging, resizing, visibility, and cleanup. A shared focus
+registry orders all windows, with notifications above them.
+
+Create another floating window with the same behavior:
+
+```lua
+local inspector = window:NewWindow({
+    title = "Inspector",
+    size = UDim2.fromOffset(500, 300),
+    minSize = Vector2.new(300, 200),
+    closeBehavior = "hide", -- default is "destroy"
+})
+local logs = inspector:NewConsole()
+logs.frame.Size = UDim2.fromScale(1, 1)
+inspector:AddTopbarButton("Clear", "Clear", function() logs:Clear() end)
+inspector:Show() -- also brings it to the front
+```
+
+Floating windows support the existing container components. Their content area
+fills the space below the topbar; use panels or rows to arrange multiple
+components. `Hide`, `Toggle`, `Focus`, and `Destroy` are also available.
+Destroying the main window cleans up all of its floating windows. Additional
+windows do not replace the main window, create another log subscription, or
+create consoles of their own.
+
 ## Lua syntax highlighting
 
 Text viewers and consoles accept `syntax = "lua"` or `"luau"`. Omit it for

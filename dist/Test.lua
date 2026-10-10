@@ -42,172 +42,192 @@ type ConsoleMessageType__DARKLUA_TYPE_k = "error" | "warning" | "info" | "succes
 
 type ConsoleEntry__DARKLUA_TYPE_l = { text: string, messageType: ConsoleMessageType__DARKLUA_TYPE_k? }
 
-type Syntax__DARKLUA_TYPE_m = "lua" | "luau" | false
+type NotifyOpts__DARKLUA_TYPE_m = { text: string, messageType: ConsoleMessageType__DARKLUA_TYPE_k?, duration: number? }
 
-type SyntaxTheme__DARKLUA_TYPE_n = {[string]: string}
+type Notification__DARKLUA_TYPE_n = Component__DARKLUA_TYPE_e & { text: string, messageType: ConsoleMessageType__DARKLUA_TYPE_k }
 
-type SyntaxToken__DARKLUA_TYPE_o = { kind: string, text: string, start: number, finish: number }
+type Syntax__DARKLUA_TYPE_o = "lua" | "luau" | false
 
-type ConsoleOpts__DARKLUA_TYPE_p = {
+type SyntaxTheme__DARKLUA_TYPE_p = {[string]: string}
+
+type SyntaxToken__DARKLUA_TYPE_q = { kind: string, text: string, start: number, finish: number }
+
+type ConsoleOpts__DARKLUA_TYPE_r = {
     text: string?, height: number?, maxEntries: number?, autoScroll: boolean?,
-    syntax: Syntax__DARKLUA_TYPE_m?, syntaxTheme: SyntaxTheme__DARKLUA_TYPE_n?,
+    syntax: Syntax__DARKLUA_TYPE_o?, syntaxTheme: SyntaxTheme__DARKLUA_TYPE_p?,
 }
 
-type Record__DARKLUA_TYPE_q = { id: string | number, values: {[string]: any}, data: any? }
+type Record__DARKLUA_TYPE_s = { id: string | number, values: {[string]: any}, data: any? }
 
-type Column__DARKLUA_TYPE_r = { key: string, text: string?, width: number? }
+type Column__DARKLUA_TYPE_t = { key: string, text: string?, width: number? }
 
-type ListOpts__DARKLUA_TYPE_s = {
-    text: string?, size: UDim2?, height: number?, columns: {Column__DARKLUA_TYPE_r}?,
+type ListOpts__DARKLUA_TYPE_u = {
+    text: string?, size: UDim2?, height: number?, columns: {Column__DARKLUA_TYPE_t}?,
     rowHeight: number?, maxRecords: number?,
 }
 
-type TreeNode__DARKLUA_TYPE_t = {
-    id: string | number, text: string, data: any?, children: {TreeNode__DARKLUA_TYPE_t}?,
-    loadChildren: (() -> {TreeNode__DARKLUA_TYPE_t})?,
+type TreeNode__DARKLUA_TYPE_v = {
+    id: string | number, text: string, data: any?, children: {TreeNode__DARKLUA_TYPE_v}?,
+    loadChildren: (() -> {TreeNode__DARKLUA_TYPE_v})?,
 }
 
-type TreeOpts__DARKLUA_TYPE_u = { text: string?, size: UDim2?, height: number?, maxDepth: number?, emptyText: string? }
+type TreeOpts__DARKLUA_TYPE_w = { text: string?, size: UDim2?, height: number?, maxDepth: number?, emptyText: string? }
 
-type TextViewerOpts__DARKLUA_TYPE_v = {
+type TextViewerOpts__DARKLUA_TYPE_x = {
     text: string?, size: UDim2?, height: number?, editable: boolean?,
-    syntax: Syntax__DARKLUA_TYPE_m?, syntaxTheme: SyntaxTheme__DARKLUA_TYPE_n?,
+    syntax: Syntax__DARKLUA_TYPE_o?, syntaxTheme: SyntaxTheme__DARKLUA_TYPE_p?,
 }
 
-type ToggleOpts__DARKLUA_TYPE_w = { text: string, value: boolean? }
+type ToggleOpts__DARKLUA_TYPE_y = { text: string, value: boolean? }
 
-type DropdownOpts__DARKLUA_TYPE_x = { text: string, options: {string}, value: string? }
+type DropdownOpts__DARKLUA_TYPE_z = { text: string, options: {string}, value: string? }
 
-type MenuItem__DARKLUA_TYPE_y = { text: string, callback: () -> (), enabled: boolean? }
+type MenuItem__DARKLUA_TYPE_A = { text: string, callback: () -> (), enabled: boolean? }
 
-type MenuOpts__DARKLUA_TYPE_z = { text: string, items: {MenuItem__DARKLUA_TYPE_y} }
+type MenuOpts__DARKLUA_TYPE_B = { text: string, items: {MenuItem__DARKLUA_TYPE_A} }
 
-type Container__DARKLUA_TYPE_A = Component__DARKLUA_TYPE_e & {
+type Container__DARKLUA_TYPE_C = Component__DARKLUA_TYPE_e & {
     contentFrame: GuiObject,
-    NewButton: (self: any, opts: ComponentOpts__DARKLUA_TYPE_f, callback: (() -> any)?) -> Button__DARKLUA_TYPE_B,
-    NewTextbox: (self: any, opts: ComponentOpts__DARKLUA_TYPE_f, callback: ((string) -> any)?) -> Textbox__DARKLUA_TYPE_C,
-    NewRow: (self: any, opts: RowOpts__DARKLUA_TYPE_g?) -> Row__DARKLUA_TYPE_D,
-    NewConsole: (self: any, opts: ConsoleOpts__DARKLUA_TYPE_p?) -> Console__DARKLUA_TYPE_F,
-    NewPanel: (self: any, opts: PanelOpts__DARKLUA_TYPE_i?) -> Container__DARKLUA_TYPE_A,
-    NewSplitPane: (self: any, opts: SplitPaneOpts__DARKLUA_TYPE_j?) -> SplitPane__DARKLUA_TYPE_E,
-    NewList: (self: any, opts: ListOpts__DARKLUA_TYPE_s?) -> List__DARKLUA_TYPE_G,
-    NewTree: (self: any, opts: TreeOpts__DARKLUA_TYPE_u?) -> Tree__DARKLUA_TYPE_H,
-    NewTextViewer: (self: any, opts: TextViewerOpts__DARKLUA_TYPE_v?) -> TextViewer__DARKLUA_TYPE_I,
-    NewToggle: (self: any, opts: ToggleOpts__DARKLUA_TYPE_w, callback: ((boolean) -> ())?) -> Toggle__DARKLUA_TYPE_J,
-    NewDropdown: (self: any, opts: DropdownOpts__DARKLUA_TYPE_x, callback: ((string?) -> ())?) -> Dropdown__DARKLUA_TYPE_K,
-    NewMenu: (self: any, opts: MenuOpts__DARKLUA_TYPE_z) -> Menu__DARKLUA_TYPE_L,
+    NewButton: (self: any, opts: ComponentOpts__DARKLUA_TYPE_f, callback: (() -> any)?) -> Button__DARKLUA_TYPE_D,
+    NewTextbox: (self: any, opts: ComponentOpts__DARKLUA_TYPE_f, callback: ((string) -> any)?) -> Textbox__DARKLUA_TYPE_E,
+    NewRow: (self: any, opts: RowOpts__DARKLUA_TYPE_g?) -> Row__DARKLUA_TYPE_F,
+    NewConsole: (self: any, opts: ConsoleOpts__DARKLUA_TYPE_r?) -> Console__DARKLUA_TYPE_H,
+    NewPanel: (self: any, opts: PanelOpts__DARKLUA_TYPE_i?) -> Container__DARKLUA_TYPE_C,
+    NewSplitPane: (self: any, opts: SplitPaneOpts__DARKLUA_TYPE_j?) -> SplitPane__DARKLUA_TYPE_G,
+    NewList: (self: any, opts: ListOpts__DARKLUA_TYPE_u?) -> List__DARKLUA_TYPE_I,
+    NewTree: (self: any, opts: TreeOpts__DARKLUA_TYPE_w?) -> Tree__DARKLUA_TYPE_J,
+    NewTextViewer: (self: any, opts: TextViewerOpts__DARKLUA_TYPE_x?) -> TextViewer__DARKLUA_TYPE_K,
+    NewToggle: (self: any, opts: ToggleOpts__DARKLUA_TYPE_y, callback: ((boolean) -> ())?) -> Toggle__DARKLUA_TYPE_L,
+    NewDropdown: (self: any, opts: DropdownOpts__DARKLUA_TYPE_z, callback: ((string?) -> ())?) -> Dropdown__DARKLUA_TYPE_M,
+    NewMenu: (self: any, opts: MenuOpts__DARKLUA_TYPE_B) -> Menu__DARKLUA_TYPE_N,
 }
 
-type Button__DARKLUA_TYPE_B = Component__DARKLUA_TYPE_e & {
+type Button__DARKLUA_TYPE_D = Component__DARKLUA_TYPE_e & {
     button: TextButton,
     callback: (() -> any)?,
-    SetText: (self: Button__DARKLUA_TYPE_B, value: string) -> (),
-    SetEnabled: (self: Button__DARKLUA_TYPE_B, value: boolean) -> (),
+    SetText: (self: Button__DARKLUA_TYPE_D, value: string) -> (),
+    SetEnabled: (self: Button__DARKLUA_TYPE_D, value: boolean) -> (),
 }
 
-type Textbox__DARKLUA_TYPE_C = Component__DARKLUA_TYPE_e & {
+type Textbox__DARKLUA_TYPE_E = Component__DARKLUA_TYPE_e & {
     button: TextBox,
     callback: ((string) -> any)?,
-    GetValue: (self: Textbox__DARKLUA_TYPE_C) -> string,
-    SetValue: (self: Textbox__DARKLUA_TYPE_C, value: string) -> (),
-    SetPlaceholder: (self: Textbox__DARKLUA_TYPE_C, value: string) -> (),
-    SetEnabled: (self: Textbox__DARKLUA_TYPE_C, value: boolean) -> (),
-    Focus: (self: Textbox__DARKLUA_TYPE_C) -> (),
-    OnChanged: (self: Textbox__DARKLUA_TYPE_C, callback: (string) -> ()) -> RBXScriptConnection,
-    OnSubmitted: (self: Textbox__DARKLUA_TYPE_C, callback: (string) -> ()) -> RBXScriptConnection,
+    GetValue: (self: Textbox__DARKLUA_TYPE_E) -> string,
+    SetValue: (self: Textbox__DARKLUA_TYPE_E, value: string) -> (),
+    SetPlaceholder: (self: Textbox__DARKLUA_TYPE_E, value: string) -> (),
+    SetEnabled: (self: Textbox__DARKLUA_TYPE_E, value: boolean) -> (),
+    Focus: (self: Textbox__DARKLUA_TYPE_E) -> (),
+    OnChanged: (self: Textbox__DARKLUA_TYPE_E, callback: (string) -> ()) -> RBXScriptConnection,
+    OnSubmitted: (self: Textbox__DARKLUA_TYPE_E, callback: (string) -> ()) -> RBXScriptConnection,
 }
 
-type Row__DARKLUA_TYPE_D = Component__DARKLUA_TYPE_e & {
+type Row__DARKLUA_TYPE_F = Component__DARKLUA_TYPE_e & {
     rowFrame: Frame,
     componentWidths: {number},
     gap: number,
-    NewButton: (self: Row__DARKLUA_TYPE_D, opts: RowComponentOpts__DARKLUA_TYPE_h, callback: (() -> any)?) -> Button__DARKLUA_TYPE_B,
-    NewTextbox: (self: Row__DARKLUA_TYPE_D, opts: RowComponentOpts__DARKLUA_TYPE_h, callback: ((string) -> any)?) -> Textbox__DARKLUA_TYPE_C,
+    NewButton: (self: Row__DARKLUA_TYPE_F, opts: RowComponentOpts__DARKLUA_TYPE_h, callback: (() -> any)?) -> Button__DARKLUA_TYPE_D,
+    NewTextbox: (self: Row__DARKLUA_TYPE_F, opts: RowComponentOpts__DARKLUA_TYPE_h, callback: ((string) -> any)?) -> Textbox__DARKLUA_TYPE_E,
 }
 
-type SplitPane__DARKLUA_TYPE_E = Component__DARKLUA_TYPE_e & {
-    first: Container__DARKLUA_TYPE_A, second: Container__DARKLUA_TYPE_A, ratio: number,
-    SetRatio: (self: SplitPane__DARKLUA_TYPE_E, value: number) -> (),
+type SplitPane__DARKLUA_TYPE_G = Component__DARKLUA_TYPE_e & {
+    first: Container__DARKLUA_TYPE_C, second: Container__DARKLUA_TYPE_C, ratio: number,
+    SetRatio: (self: SplitPane__DARKLUA_TYPE_G, value: number) -> (),
 }
 
-type Console__DARKLUA_TYPE_F = Component__DARKLUA_TYPE_e & {
+type Console__DARKLUA_TYPE_H = Component__DARKLUA_TYPE_e & {
     consoleFrame: ScrollingFrame,
-    NewEntry: (self: Console__DARKLUA_TYPE_F, text: string, messageType: ConsoleMessageType__DARKLUA_TYPE_k) -> (),
-    Append: (self: Console__DARKLUA_TYPE_F, entries: {ConsoleEntry__DARKLUA_TYPE_l}) -> (),
-    SetPaused: (self: Console__DARKLUA_TYPE_F, value: boolean) -> (),
-    SetAutoScroll: (self: Console__DARKLUA_TYPE_F, value: boolean) -> (),
+    NewEntry: (self: Console__DARKLUA_TYPE_H, text: string, messageType: ConsoleMessageType__DARKLUA_TYPE_k) -> (),
+    Append: (self: Console__DARKLUA_TYPE_H, entries: {ConsoleEntry__DARKLUA_TYPE_l}) -> (),
+    SetPaused: (self: Console__DARKLUA_TYPE_H, value: boolean) -> (),
+    SetAutoScroll: (self: Console__DARKLUA_TYPE_H, value: boolean) -> (),
 }
 
-type List__DARKLUA_TYPE_G = Component__DARKLUA_TYPE_e & {
-    records: {Record__DARKLUA_TYPE_q}, selectedId: (string | number)?,
-    SetRecords: (self: List__DARKLUA_TYPE_G, records: {Record__DARKLUA_TYPE_q}) -> (),
-    Append: (self: List__DARKLUA_TYPE_G, records: {Record__DARKLUA_TYPE_q}) -> (),
-    Refresh: (self: List__DARKLUA_TYPE_G) -> (),
-    SetFilter: (self: List__DARKLUA_TYPE_G, value: string) -> (),
-    SetSort: (self: List__DARKLUA_TYPE_G, key: string, ascending: boolean?) -> (),
-    Select: (self: List__DARKLUA_TYPE_G, id: string | number) -> (),
-    OnSelected: (self: List__DARKLUA_TYPE_G, callback: (Record__DARKLUA_TYPE_q?) -> ()) -> RBXScriptConnection,
+type List__DARKLUA_TYPE_I = Component__DARKLUA_TYPE_e & {
+    records: {Record__DARKLUA_TYPE_s}, selectedId: (string | number)?,
+    SetRecords: (self: List__DARKLUA_TYPE_I, records: {Record__DARKLUA_TYPE_s}) -> (),
+    Append: (self: List__DARKLUA_TYPE_I, records: {Record__DARKLUA_TYPE_s}) -> (),
+    Refresh: (self: List__DARKLUA_TYPE_I) -> (),
+    SetFilter: (self: List__DARKLUA_TYPE_I, value: string) -> (),
+    SetSort: (self: List__DARKLUA_TYPE_I, key: string, ascending: boolean?) -> (),
+    Select: (self: List__DARKLUA_TYPE_I, id: string | number) -> (),
+    OnSelected: (self: List__DARKLUA_TYPE_I, callback: (Record__DARKLUA_TYPE_s?) -> ()) -> RBXScriptConnection,
 }
 
-type Tree__DARKLUA_TYPE_H = Component__DARKLUA_TYPE_e & {
-    SetNodes: (self: Tree__DARKLUA_TYPE_H, nodes: {TreeNode__DARKLUA_TYPE_t}) -> (),
-    Expand: (self: Tree__DARKLUA_TYPE_H, id: string | number, value: boolean) -> (),
-    Select: (self: Tree__DARKLUA_TYPE_H, id: string | number) -> (),
-    OnSelected: (self: Tree__DARKLUA_TYPE_H, callback: (TreeNode__DARKLUA_TYPE_t?) -> ()) -> RBXScriptConnection,
+type Tree__DARKLUA_TYPE_J = Component__DARKLUA_TYPE_e & {
+    SetNodes: (self: Tree__DARKLUA_TYPE_J, nodes: {TreeNode__DARKLUA_TYPE_v}) -> (),
+    Expand: (self: Tree__DARKLUA_TYPE_J, id: string | number, value: boolean) -> (),
+    Select: (self: Tree__DARKLUA_TYPE_J, id: string | number) -> (),
+    OnSelected: (self: Tree__DARKLUA_TYPE_J, callback: (TreeNode__DARKLUA_TYPE_v?) -> ()) -> RBXScriptConnection,
 }
 
-type TextViewer__DARKLUA_TYPE_I = Component__DARKLUA_TYPE_e & {
+type TextViewer__DARKLUA_TYPE_K = Component__DARKLUA_TYPE_e & {
     textbox: TextBox,
-    SetText: (self: TextViewer__DARKLUA_TYPE_I, value: string) -> (),
-    GetText: (self: TextViewer__DARKLUA_TYPE_I) -> string,
-    SetSyntax: (self: TextViewer__DARKLUA_TYPE_I, value: Syntax__DARKLUA_TYPE_m?) -> (),
-    OnChanged: (self: TextViewer__DARKLUA_TYPE_I, callback: (string) -> ()) -> RBXScriptConnection,
+    SetText: (self: TextViewer__DARKLUA_TYPE_K, value: string) -> (),
+    GetText: (self: TextViewer__DARKLUA_TYPE_K) -> string,
+    SetSyntax: (self: TextViewer__DARKLUA_TYPE_K, value: Syntax__DARKLUA_TYPE_o?) -> (),
+    OnChanged: (self: TextViewer__DARKLUA_TYPE_K, callback: (string) -> ()) -> RBXScriptConnection,
 }
 
-type Toggle__DARKLUA_TYPE_J = Button__DARKLUA_TYPE_B & {
-    SetValue: (self: Toggle__DARKLUA_TYPE_J, value: boolean) -> (),
-    GetValue: (self: Toggle__DARKLUA_TYPE_J) -> boolean,
-    OnChanged: (self: Toggle__DARKLUA_TYPE_J, callback: (boolean) -> ()) -> RBXScriptConnection,
+type Toggle__DARKLUA_TYPE_L = Button__DARKLUA_TYPE_D & {
+    SetValue: (self: Toggle__DARKLUA_TYPE_L, value: boolean) -> (),
+    GetValue: (self: Toggle__DARKLUA_TYPE_L) -> boolean,
+    OnChanged: (self: Toggle__DARKLUA_TYPE_L, callback: (boolean) -> ()) -> RBXScriptConnection,
 }
 
-type Dropdown__DARKLUA_TYPE_K = Component__DARKLUA_TYPE_e & {
+type Dropdown__DARKLUA_TYPE_M = Component__DARKLUA_TYPE_e & {
     button: TextButton,
-    SetOpen: (self: Dropdown__DARKLUA_TYPE_K, value: boolean) -> (),
-    SetValue: (self: Dropdown__DARKLUA_TYPE_K, value: string?) -> (),
-    GetValue: (self: Dropdown__DARKLUA_TYPE_K) -> string?,
-    SetOptions: (self: Dropdown__DARKLUA_TYPE_K, options: {string}) -> (),
-    SetEnabled: (self: Dropdown__DARKLUA_TYPE_K, value: boolean) -> (),
-    OnChanged: (self: Dropdown__DARKLUA_TYPE_K, callback: (string?) -> ()) -> RBXScriptConnection,
+    SetOpen: (self: Dropdown__DARKLUA_TYPE_M, value: boolean) -> (),
+    SetValue: (self: Dropdown__DARKLUA_TYPE_M, value: string?) -> (),
+    GetValue: (self: Dropdown__DARKLUA_TYPE_M) -> string?,
+    SetOptions: (self: Dropdown__DARKLUA_TYPE_M, options: {string}) -> (),
+    SetEnabled: (self: Dropdown__DARKLUA_TYPE_M, value: boolean) -> (),
+    OnChanged: (self: Dropdown__DARKLUA_TYPE_M, callback: (string?) -> ()) -> RBXScriptConnection,
 }
 
-type Menu__DARKLUA_TYPE_L = Button__DARKLUA_TYPE_B & { SetOpen: (self: Menu__DARKLUA_TYPE_L, value: boolean) -> () }
+type Menu__DARKLUA_TYPE_N = Button__DARKLUA_TYPE_D & { SetOpen: (self: Menu__DARKLUA_TYPE_N, value: boolean) -> () }
 
-type Section__DARKLUA_TYPE_M = Container__DARKLUA_TYPE_A & { parentTab: Tab__DARKLUA_TYPE_N, sectionFrame: Frame }
+type Section__DARKLUA_TYPE_O = Container__DARKLUA_TYPE_C & { parentTab: Tab__DARKLUA_TYPE_P, sectionFrame: Frame }
 
-type Tab__DARKLUA_TYPE_N = Container__DARKLUA_TYPE_A & {
-    parentWindow: Window__DARKLUA_TYPE_S, tabBtn: TextButton, sections: {Component__DARKLUA_TYPE_e}, container: ScrollingFrame,
+type Tab__DARKLUA_TYPE_P = Container__DARKLUA_TYPE_C & {
+    parentWindow: Window__DARKLUA_TYPE_W, tabBtn: TextButton, sections: {Component__DARKLUA_TYPE_e}, container: ScrollingFrame,
     columns: {left: Frame, right: Frame, top: Frame, bottom: Frame, full: Frame},
-    NewSection: (self: Tab__DARKLUA_TYPE_N, name: string, side: SectionSide__DARKLUA_TYPE_c?) -> Section__DARKLUA_TYPE_M,
-    ShowCurrentTab: (self: Tab__DARKLUA_TYPE_N) -> (), HideCurrentTab: (self: Tab__DARKLUA_TYPE_N) -> (),
+    NewSection: (self: Tab__DARKLUA_TYPE_P, name: string, side: SectionSide__DARKLUA_TYPE_c?) -> Section__DARKLUA_TYPE_O,
+    ShowCurrentTab: (self: Tab__DARKLUA_TYPE_P) -> (), HideCurrentTab: (self: Tab__DARKLUA_TYPE_P) -> (),
 }
 
-type TabOpts__DARKLUA_TYPE_O = { layout: ("sections" | "free")? }
+type TabOpts__DARKLUA_TYPE_Q = { layout: ("sections" | "free")? }
 
-type WindowOpts__DARKLUA_TYPE_P = { size: UDim2?, minSize: Vector2? }
+type WindowOpts__DARKLUA_TYPE_R = { size: UDim2?, minSize: Vector2?, captureLogs: boolean? }
 
-type WindowGuis__DARKLUA_TYPE_Q = { ScreenGui: ScreenGui, Root: Frame, Topbar: Frame, Sidebar: ScrollingFrame }
+type FloatingWindowOpts__DARKLUA_TYPE_S = {
+    name: string?, title: string?, size: UDim2?, position: UDim2?, minSize: Vector2?,
+    visible: boolean?, closeBehavior: ("hide" | "destroy")?, backgroundColor: Color3?,
+}
 
-type ShortcutOpts__DARKLUA_TYPE_R = { ctrl: boolean?, shift: boolean? }
+type FloatingWindow__DARKLUA_TYPE_T = Container__DARKLUA_TYPE_C & {
+    guis: { ScreenGui: ScreenGui, Root: Frame, Topbar: Frame },
+    Show: (self: FloatingWindow__DARKLUA_TYPE_T) -> (), Hide: (self: FloatingWindow__DARKLUA_TYPE_T) -> (),
+    Toggle: (self: FloatingWindow__DARKLUA_TYPE_T) -> (), Focus: (self: FloatingWindow__DARKLUA_TYPE_T) -> (),
+    AddTopbarButton: (self: FloatingWindow__DARKLUA_TYPE_T, name: string, text: string, callback: () -> (), width: number?) -> TextButton,
+}
 
-type Window__DARKLUA_TYPE_S = {
-    ctx: ctx__DARKLUA_TYPE_b, guis: WindowGuis__DARKLUA_TYPE_Q, scope: Scope__DARKLUA_TYPE_d, conns: {RBXScriptConnection},
-    currentTab: Tab__DARKLUA_TYPE_N?, tabs: {Tab__DARKLUA_TYPE_N},
-    Show: (self: Window__DARKLUA_TYPE_S) -> (), Hide: (self: Window__DARKLUA_TYPE_S) -> (), Toggle: (self: Window__DARKLUA_TYPE_S) -> (),
-    SetVisible: (self: Window__DARKLUA_TYPE_S, value: boolean) -> (),
-    Clear: (self: Window__DARKLUA_TYPE_S) -> (), Destroy: (self: Window__DARKLUA_TYPE_S) -> (),
-    NewTab: (self: Window__DARKLUA_TYPE_S, name: string, opts: TabOpts__DARKLUA_TYPE_O?) -> Tab__DARKLUA_TYPE_N,
-    SelectTab: (self: Window__DARKLUA_TYPE_S, tab: Tab__DARKLUA_TYPE_N) -> (),
-    BindShortcut: (self: Window__DARKLUA_TYPE_S, key: Enum.KeyCode, callback: () -> (), opts: ShortcutOpts__DARKLUA_TYPE_R?) -> RBXScriptConnection,
+type WindowGuis__DARKLUA_TYPE_U = { ScreenGui: ScreenGui, Root: Frame, Topbar: Frame, Sidebar: ScrollingFrame }
+
+type ShortcutOpts__DARKLUA_TYPE_V = { ctrl: boolean?, shift: boolean? }
+
+type Window__DARKLUA_TYPE_W = {
+    ctx: ctx__DARKLUA_TYPE_b, guis: WindowGuis__DARKLUA_TYPE_U, scope: Scope__DARKLUA_TYPE_d, conns: {RBXScriptConnection},
+    currentTab: Tab__DARKLUA_TYPE_P?, tabs: {Tab__DARKLUA_TYPE_P},
+    Show: (self: Window__DARKLUA_TYPE_W) -> (), Hide: (self: Window__DARKLUA_TYPE_W) -> (), Toggle: (self: Window__DARKLUA_TYPE_W) -> (),
+    SetVisible: (self: Window__DARKLUA_TYPE_W, value: boolean) -> (),
+    Clear: (self: Window__DARKLUA_TYPE_W) -> (), Destroy: (self: Window__DARKLUA_TYPE_W) -> (),
+    NewTab: (self: Window__DARKLUA_TYPE_W, name: string, opts: TabOpts__DARKLUA_TYPE_Q?) -> Tab__DARKLUA_TYPE_P,
+    NewWindow: (self: Window__DARKLUA_TYPE_W, opts: FloatingWindowOpts__DARKLUA_TYPE_S?) -> FloatingWindow__DARKLUA_TYPE_T,
+    SelectTab: (self: Window__DARKLUA_TYPE_W, tab: Tab__DARKLUA_TYPE_P) -> (),
+    OpenConsole: (self: Window__DARKLUA_TYPE_W) -> Console__DARKLUA_TYPE_H,
+    Log: (self: Window__DARKLUA_TYPE_W, text: string, messageType: ConsoleMessageType__DARKLUA_TYPE_k?) -> (),
+    Notify: (self: Window__DARKLUA_TYPE_W, opts: NotifyOpts__DARKLUA_TYPE_m) -> Notification__DARKLUA_TYPE_n?,
+    BindShortcut: (self: Window__DARKLUA_TYPE_W, key: Enum.KeyCode, callback: () -> (), opts: ShortcutOpts__DARKLUA_TYPE_V?) -> RBXScriptConnection,
 }
 local __DARKLUA_BUNDLE_MODULES={cache={}::any}do do local function __modImpl()
 return {
@@ -229,6 +249,23 @@ return {
     },
 }
 end function __DARKLUA_BUNDLE_MODULES.a():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.a if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.a=v end return v.c end end do local function __modImpl()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -597,7 +634,7 @@ local m = {}
 local controls = __DARKLUA_BUNDLE_MODULES.f()
 local types = __DARKLUA_BUNDLE_MODULES.b()
 
-function m.new(owner: Container__DARKLUA_TYPE_A, opts: ComponentOpts__DARKLUA_TYPE_f, callback, parent: GuiObject?): Button__DARKLUA_TYPE_B    
+function m.new(owner: Container__DARKLUA_TYPE_C, opts: ComponentOpts__DARKLUA_TYPE_f, callback, parent: GuiObject?): Button__DARKLUA_TYPE_D    
 return controls.button(owner, opts, callback, parent)
 end
 
@@ -607,7 +644,7 @@ local m = {}
 local controls = __DARKLUA_BUNDLE_MODULES.f()
 local types = __DARKLUA_BUNDLE_MODULES.b()
 
-function m.new(owner: Container__DARKLUA_TYPE_A, opts: ComponentOpts__DARKLUA_TYPE_f, callback, parent: GuiObject?): Textbox__DARKLUA_TYPE_C    
+function m.new(owner: Container__DARKLUA_TYPE_C, opts: ComponentOpts__DARKLUA_TYPE_f, callback, parent: GuiObject?): Textbox__DARKLUA_TYPE_E    
 return controls.textbox(owner, opts, callback, parent)
 end
 
@@ -653,7 +690,7 @@ local function onRemove(self, index)
     updateWidths(self)
 end
 
-function m.new(owner: Container__DARKLUA_TYPE_A, opts: RowOpts__DARKLUA_TYPE_g?): Row__DARKLUA_TYPE_D    
+function m.new(owner: Container__DARKLUA_TYPE_C, opts: RowOpts__DARKLUA_TYPE_g?): Row__DARKLUA_TYPE_F    
 local options = opts or {}
     local frame = Instance.new("Frame")
     frame.Name = options.text or "Row"
@@ -677,20 +714,16 @@ local options = opts or {}
     return self
 end
 
-function m:NewButton(opts: RowComponentOpts__DARKLUA_TYPE_h, callback): Button__DARKLUA_TYPE_B    
+function m:NewButton(opts: RowComponentOpts__DARKLUA_TYPE_h, callback): Button__DARKLUA_TYPE_D    
 return add(self, controls.button(self, opts, callback, self.rowFrame), opts)
 end
 
-function m:NewTextbox(opts: RowComponentOpts__DARKLUA_TYPE_h, callback): Textbox__DARKLUA_TYPE_C    
+function m:NewTextbox(opts: RowComponentOpts__DARKLUA_TYPE_h, callback): Textbox__DARKLUA_TYPE_E    
 return add(self, controls.textbox(self, opts, callback, self.rowFrame), opts)
 end
 
 return m
 end function __DARKLUA_BUNDLE_MODULES.i():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.i if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.i=v end return v.c end end do local function __modImpl()
---[[AI]]
-
--- Standalone Lua/Luau lexer and Roblox RichText renderer. No UI instances required.
-
 local m = {}
 
 m.theme = {
@@ -714,7 +747,7 @@ function m.Escape(value: string): string
     return escaped
 end
 
--- Returns the byte after a long-bracket literal, including unfinished literals.
+--skip to the end of a long string or comment
 local function longBracket(source, position)
     local equals = source:sub(position):match("^%[(=*)%[")
     if not equals then return nil end
@@ -794,7 +827,6 @@ function m.Tokenize(source: string)
     return tokens
 end
 
--- Theme overrides use hex RGB strings, e.g. { keyword = "#FF80AA" }.
 function m.Highlight(source: string, theme): string
     local output = {}
     for _, token in m.Tokenize(source) do
@@ -959,6 +991,17 @@ return m
 end function __DARKLUA_BUNDLE_MODULES.l():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.l if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.l=v end return v.c end end do local function __modImpl()
 local m = {}
 
+local activeOwner
+
+local function visible(handle)
+    while handle do
+        if handle:IsA("GuiObject") and not handle.Visible then return false end
+        if handle:IsA("ScreenGui") and not handle.Enabled then return false end
+        handle = handle.Parent
+    end
+    return true
+end
+
 function m.scale(gui)
     local scale = 1
     while gui do
@@ -970,28 +1013,91 @@ function m.scale(gui)
     return math.max(0.001, scale)
 end
 
-function m.attach(scope, handle, started, moved)
+function m.attach(scope, handle, started, moved, canStart)
     local input = game:GetService("UserInputService")
     local active, origin
+    local token = {}
+
+    local function release()
+        active = nil
+        if activeOwner == token then activeOwner = nil end
+    end
+    scope:Add(release)
+
+    --stop dragging when the window gets hidden
+    local ancestor = handle
+    while ancestor do
+        if ancestor:IsA("GuiObject") then
+            local object = ancestor
+            scope:Connect(object:GetPropertyChangedSignal("Visible"), function()
+                if not object.Visible then release() end
+            end)
+        elseif ancestor:IsA("ScreenGui") then
+            local screen = ancestor
+            scope:Connect(screen:GetPropertyChangedSignal("Enabled"), function()
+                if not screen.Enabled then release() end
+            end)
+        end
+        ancestor = ancestor.Parent
+    end
+
     handle.Active = true
     scope:Connect(handle.InputBegan, function(event)
-        if active then return end
+        if activeOwner or not visible(handle) then return end
         if event.UserInputType ~= Enum.UserInputType.MouseButton1 and event.UserInputType ~= Enum.UserInputType.Touch then return end
+        if event.UserInputState == Enum.UserInputState.End or event.UserInputState == Enum.UserInputState.Cancel then return end
+        if canStart and not canStart(event) then return end
+        activeOwner = token
         active = event
         origin = Vector2.new(event.Position.X, event.Position.Y)
         started()
     end)
+
     scope:Connect(input.InputChanged, function(event)
         if not active then return end
+        if not visible(handle) then
+            release()
+            return
+        end
+        if event == active and (event.UserInputState == Enum.UserInputState.End
+            or event.UserInputState == Enum.UserInputState.Cancel) then
+            release()
+            return
+        end
         local mouse = active.UserInputType == Enum.UserInputType.MouseButton1
         if (mouse and event.UserInputType == Enum.UserInputType.MouseMovement) or event == active then
             moved(Vector2.new(event.Position.X, event.Position.Y) - origin)
         end
     end)
+
     scope:Connect(input.InputEnded, function(event)
-        if event == active then active = nil end
+        --mouse events can use different objects, touch needs the same finger
+        if event == active or (active and active.UserInputType == Enum.UserInputType.MouseButton1
+            and event.UserInputType == Enum.UserInputType.MouseButton1) then
+            release()
+        end
     end)
-    scope:Connect(input.WindowFocusReleased, function() active = nil end)
+    scope:Connect(input.WindowFocusReleased, release)
+end
+
+function m.attachResize(scope, handle, root, minimum, canStart)
+    local resizeScale, parentScale, sizeStart, positionStart
+    m.attach(scope, handle, function()
+        resizeScale = m.scale(root)
+        parentScale = m.scale(root.Parent)
+        sizeStart = Vector2.new(root.AbsoluteSize.X / resizeScale, root.AbsoluteSize.Y / resizeScale)
+        positionStart = root.Position
+    end, function(delta)
+        local width = math.max(minimum.X, sizeStart.X + delta.X / resizeScale)
+        local height = math.max(minimum.Y, sizeStart.Y + delta.Y / resizeScale)
+        root.Size = UDim2.fromOffset(width, height)
+        root.Position = UDim2.new(
+            positionStart.X.Scale,
+            positionStart.X.Offset + (width - sizeStart.X) * resizeScale / parentScale * root.AnchorPoint.X,
+            positionStart.Y.Scale,
+            positionStart.Y.Offset + (height - sizeStart.Y) * resizeScale / parentScale * root.AnchorPoint.Y
+        )
+    end, canStart)
 end
 
 return m
@@ -1952,7 +2058,7 @@ function m:NewMenu(opts)
 end
 
 function m.attach(self)
-    -- Preserve the instance's existing methods (for example, a custom Clear).
+    --dont overwrite methods the component already has
     for name, method in m do
         if name ~= "attach" and self[name] == nil then self[name] = method end
     end
@@ -1973,7 +2079,7 @@ local function updateHeight(self)
     self.frame.Size = UDim2.new(1, 0, 0, 40 + self.layout.AbsoluteContentSize.Y)
 end
 
-function m.new(tab: Tab__DARKLUA_TYPE_N, name: string, side: SectionSide__DARKLUA_TYPE_c, order: number): Section__DARKLUA_TYPE_M    
+function m.new(tab: Tab__DARKLUA_TYPE_P, name: string, side: SectionSide__DARKLUA_TYPE_c, order: number): Section__DARKLUA_TYPE_O    
 local frame = Instance.new("Frame")
     frame.Name = name
     frame.BackgroundColor3 = colors.section
@@ -2094,7 +2200,7 @@ local function createContainer(root: Frame, topbarHeight: number): ScrollingFram
     return container
 end
 
-function m.new(window: Window__DARKLUA_TYPE_S, name: string, opts: TabOpts__DARKLUA_TYPE_O?): Tab__DARKLUA_TYPE_N    
+function m.new(window: Window__DARKLUA_TYPE_W, name: string, opts: TabOpts__DARKLUA_TYPE_Q?): Tab__DARKLUA_TYPE_P    
 local self = setmetatable({}, m)
 
     self.tabBtn = createTabBar(window.guis["Sidebar"], name)
@@ -2114,7 +2220,6 @@ local self = setmetatable({}, m)
     else
         local content = createArea(self.container, "Sections", 0)
         content.Position = UDim2.fromOffset(5, 5)
-        -- Insets apply to the shared wrapper, including full-width sections.
         content.Size = UDim2.new(1, -10 - self.container.ScrollBarThickness, 0, 0)
         local top = createArea(content, "Top", 0)
 
@@ -2132,7 +2237,7 @@ local self = setmetatable({}, m)
         right.Size = UDim2.new(0.5, -3, 0, 0)
         right.Position = UDim2.new(0.5, 3, 0, 0)
 
-        -- Reserve space for the taller column before placing bottom sections.
+        --use the taller column so the bottom sections dont overlap
         self.scope:Connect(leftLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function() updateRowHeight(row, leftLayout, rightLayout) end)
         self.scope:Connect(rightLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function() updateRowHeight(row, leftLayout, rightLayout) end)
         updateRowHeight(row, leftLayout, rightLayout)
@@ -2157,10 +2262,10 @@ local self = setmetatable({}, m)
     container.attach(self)
     self.baseDestroy = self.Destroy
     self.Destroy = m.Destroy
-    return self :: Tab__DARKLUA_TYPE_N
+    return self :: Tab__DARKLUA_TYPE_P
 end
 
-function m.NewSection(self: Tab__DARKLUA_TYPE_N, name: string, side: SectionSide__DARKLUA_TYPE_c?): Section__DARKLUA_TYPE_M    
+function m.NewSection(self: Tab__DARKLUA_TYPE_P, name: string, side: SectionSide__DARKLUA_TYPE_c?): Section__DARKLUA_TYPE_O    
 local columnSide = side or "left"
     self.nextOrder = (self.nextOrder or 0) + 1
     local order = self.nextOrder
@@ -2170,16 +2275,390 @@ local columnSide = side or "left"
     return newSection
 end
 
-function m.ShowCurrentTab(self: Tab__DARKLUA_TYPE_N): ()
+function m.ShowCurrentTab(self: Tab__DARKLUA_TYPE_P): ()
     self.container.Visible = true
 end
 
-function m.HideCurrentTab(self: Tab__DARKLUA_TYPE_N): ()
+function m.HideCurrentTab(self: Tab__DARKLUA_TYPE_P): ()
     self.container.Visible = false
 end
 
 return m
 end function __DARKLUA_BUNDLE_MODULES.x():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.x if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.x=v end return v.c end end do local function __modImpl()
+local m = {}
+
+m.__index = m
+
+local colors = __DARKLUA_BUNDLE_MODULES.a()
+local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
+local drag = __DARKLUA_BUNDLE_MODULES.m()
+local ui = __DARKLUA_BUNDLE_MODULES.c()
+local container = __DARKLUA_BUNDLE_MODULES.v()
+
+function m:Focus()
+    self.focusManager:Focus(self)
+end
+
+function m:SetVisible(value)
+    if self.destroyed then return end
+    self.frame.Visible = value
+    if value then self:Focus() end
+end
+
+function m:Show()
+    self:SetVisible(true)
+end
+
+function m:Hide()
+    self:SetVisible(false)
+end
+
+function m:Toggle()
+    self:SetVisible(not self.frame.Visible)
+end
+
+function m:AddTopbarButton(name, text, callback, width)
+    local button = ui.createButton(self.guis.Topbar, { text = text }, 15)
+    button.Name = name
+    button.Size = UDim2.fromOffset(width or 60, 22)
+    self.actionWidth += (width or 60) + 5
+    button.Position = UDim2.new(1, -self.actionWidth, 0, 5)
+    self.title.Size = UDim2.new(1, -self.actionWidth - 15, 1, 0)
+    self.scope:Connect(button.MouseButton1Click, callback)
+    self.focusManager:BindPress(self.scope, button)
+    return button
+end
+
+function m.new(screen, opts, focusManager, owner)
+    opts = opts or {}
+    local root = Instance.new("Frame")
+    root.Name = opts.name or "Root"
+    root.Size = opts.size or UDim2.fromScale(.5, .5)
+    root.AnchorPoint = Vector2.new(.5, .5)
+    root.Position = opts.position or UDim2.fromScale(.5, .5)
+    root.BackgroundColor3 = opts.backgroundColor or colors.component
+    root.BorderSizePixel = 0
+    root.Active = true
+    root.Visible = opts.visible ~= false
+    root.Parent = screen
+
+    local self = lifecycle.attach(setmetatable({}, m), root, owner)
+    self.SetVisible = m.SetVisible
+    self.focusManager = focusManager
+    focusManager:BindPress(self.scope, root)
+    self.minimum = opts.minSize or Vector2.new(400, 260)
+    self.guis = { ScreenGui = screen, Root = root }
+    local constraint = Instance.new("UISizeConstraint")
+    constraint.MinSize = self.minimum
+    constraint.Parent = root
+
+    local topbar = Instance.new("Frame")
+    topbar.Name = "Topbar"
+    topbar.Size = UDim2.new(1, 0, 0, 32)
+    topbar.BackgroundColor3 = colors.topbar
+    topbar.BorderSizePixel = 0
+    topbar.ZIndex = 10
+    topbar.Parent = root
+    self.guis.Topbar = topbar
+
+    local title = Instance.new("TextLabel")
+    title.Name = "Title"
+    title.Text = opts.title or ""
+    title.TextColor3 = colors.text
+    title.BackgroundTransparency = 1
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Position = UDim2.fromOffset(10, 0)
+    title.Size = UDim2.new(1, -42, 1, 0)
+    title.ZIndex = 11
+    title.Parent = topbar
+    self.title = title
+    self.actionWidth = 27
+
+    local close = ui.createButton(topbar, { text = "X" }, 15)
+    close.Name = "CloseButton"
+    close.Size = UDim2.fromOffset(22, 22)
+    close.Position = UDim2.new(1, -27, 0, 5)
+    close.BackgroundColor3 = colors.closeButton
+    focusManager:BindPress(self.scope, close)
+    self.scope:Connect(close.MouseButton1Click, function()
+        if opts.onClose then
+            opts.onClose(self)
+        elseif opts.closeBehavior == "hide" then
+            self:Hide()
+        else
+            self:Destroy()
+        end
+    end)
+
+    local start, scale
+    drag.attach(self.scope, topbar, function()
+        start = root.Position
+        scale = drag.scale(root.Parent)
+    end, function(delta)
+        root.Position = UDim2.new(start.X.Scale, start.X.Offset + delta.X / scale,
+            start.Y.Scale, start.Y.Offset + delta.Y / scale)
+    end, function(event)
+        return focusManager:CanStartDrag(self, topbar, event)
+    end)
+
+    local content = Instance.new("Frame")
+    content.Name = "Content"
+    content.BackgroundTransparency = 1
+    content.Position = UDim2.fromOffset(0, 32)
+    content.Size = UDim2.new(1, 0, 1, -32)
+    content.ZIndex = 9
+    content.Parent = root
+    self.contentFrame = content
+    container.attach(self)
+
+    local resize = Instance.new("Frame")
+    resize.Name = "Resize"
+    resize.Size = UDim2.fromOffset(16, 16)
+    resize.Position = UDim2.new(1, -16, 1, -16)
+    resize.BackgroundColor3 = colors.sectionHeader
+    resize.BorderSizePixel = 0
+    resize.ZIndex = 200
+    resize.Parent = root
+    drag.attachResize(self.scope, resize, root, self.minimum, function(event)
+        return focusManager:CanStartDrag(self, resize, event)
+    end)
+    focusManager:Register(self)
+    return self
+end
+
+return m
+end function __DARKLUA_BUNDLE_MODULES.y():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.y if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.y=v end return v.c end end do local function __modImpl()
+local m = {}
+
+m.__index = m
+
+local function contains(frame, position)
+    if not frame.Visible then return false end
+    local origin, size = frame.AbsolutePosition, frame.AbsoluteSize
+    return position.X >= origin.X and position.Y >= origin.Y
+        and position.X <= origin.X + size.X and position.Y <= origin.Y + size.Y
+end
+
+function m:HitTest(position)
+    if not self.screen.Enabled then return nil end
+    for overlay in self.overlays do
+        if not overlay.Visible then continue end
+        for _, child in overlay:GetChildren() do
+            if child:IsA("GuiObject") and contains(child, position) then return nil end
+        end
+    end
+    for index = #self.windows, 1, -1 do
+        local window = self.windows[index]
+        if contains(window.frame, position) then return window end
+    end
+    return nil
+end
+
+function m:CanStartDrag(window, handle, event)
+    if self:BeginPress(event) ~= window or self.focused ~= window then return false end
+    --dont drag when clicking the topbar buttons
+    for _, child in handle:GetChildren() do
+        if (child:IsA("TextButton") or child:IsA("ImageButton") or child:IsA("TextBox"))
+            and contains(child, event.Position) then
+            return false
+        end
+    end
+    return true
+end
+
+function m:BeginPress(event)
+    if event.UserInputType ~= Enum.UserInputType.MouseButton1
+        and event.UserInputType ~= Enum.UserInputType.Touch then
+        return nil
+    end
+    if not self.screen.Enabled or event.UserInputState == Enum.UserInputState.End
+        or event.UserInputState == Enum.UserInputState.Cancel then
+        return nil
+    end
+
+    local mouse = event.UserInputType == Enum.UserInputType.MouseButton1
+    local press = if mouse then self.mousePress else self.presses[event]
+    --only focus once per click so opening the console doesnt undo itself
+    if press then return press.window end
+
+    local window = self:HitTest(event.Position)
+    press = { window = window }
+    if mouse then
+        self.mousePress = press
+    else
+        self.presses[event] = press
+    end
+    if window then self:Focus(window) end
+    return window
+end
+
+function m:BindPress(scope, object)
+    scope:Connect(object.InputBegan, function(event)
+        self:BeginPress(event)
+    end)
+end
+
+function m.new(screen, scope)
+    local self = setmetatable({
+        screen = screen,
+        windows = {},
+        overlays = {},
+        presses = setmetatable({}, { __mode = "k" })
+    }, m)
+
+    local function resetPresses()
+        table.clear(self.presses)
+        self.mousePress = nil
+    end
+    scope:Add(function()
+        resetPresses()
+        self.focused = nil
+    end)
+
+    local input = game:GetService("UserInputService")
+    scope:Connect(input.InputBegan, function(event)
+        if not screen.Enabled then return end
+        if event.UserInputType ~= Enum.UserInputType.MouseButton1
+            and event.UserInputType ~= Enum.UserInputType.Touch then
+            return
+        end
+        self:BeginPress(event)
+    end)
+    scope:Connect(input.InputEnded, function(event)
+        if event.UserInputType == Enum.UserInputType.MouseButton1 then
+            self.mousePress = nil
+        else
+            self.presses[event] = nil
+        end
+    end)
+    scope:Connect(input.WindowFocusReleased, resetPresses)
+    scope:Connect(screen:GetPropertyChangedSignal("Enabled"), function()
+        if not screen.Enabled then resetPresses() end
+    end)
+    return self
+end
+
+function m:_restack()
+    for index, window in self.windows do window.frame.ZIndex = index + 4 end
+    for overlay in self.overlays do overlay.ZIndex = #self.windows + 10 end
+end
+
+function m:RegisterOverlay(frame, scope)
+    self.overlays[frame] = true
+    scope:Add(function() self.overlays[frame] = nil end)
+    self:_restack()
+end
+
+function m:Register(window)
+    table.insert(self.windows, window)
+    window.scope:Add(function()
+        local index = table.find(self.windows, window)
+        if index then table.remove(self.windows, index) end
+        if self.focused == window then self.focused = nil end
+        self:_restack()
+    end)
+    self:_restack()
+end
+
+function m:Focus(window)
+    if window.destroyed or not window.frame.Visible then return end
+    local index = table.find(self.windows, window)
+    if not index then return end
+    table.remove(self.windows, index)
+    table.insert(self.windows, window)
+    self.focused = window
+    self:_restack()
+end
+
+return m
+end function __DARKLUA_BUNDLE_MODULES.z():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.z if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.z=v end return v.c end end do local function __modImpl()
+local m = {}
+
+local colors = __DARKLUA_BUNDLE_MODULES.a()
+
+function m.new(window)
+    local self = window:NewWindow({
+        name = "ConsoleWindow",
+        title = "Console",
+        closeBehavior = "hide",
+        visible = false,
+        size = UDim2.fromScale(.6, .5),
+        position = UDim2.fromScale(.55, .55),
+        minSize = Vector2.new(360, 200),
+        backgroundColor = colors.console.background
+    })
+    self.console = self:NewConsole({ maxEntries = 1000 })
+    self.console.frame.Size = UDim2.fromScale(1, 1)
+    self:AddTopbarButton("Clear", "Clear", function()
+        self.console:Clear()
+    end)
+    return self
+end
+
+return m
+end function __DARKLUA_BUNDLE_MODULES.A():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.A if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.A=v end return v.c end end do local function __modImpl()
+local m = {}
+local colors = __DARKLUA_BUNDLE_MODULES.a()
+local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
+local ui = __DARKLUA_BUNDLE_MODULES.c()
+
+function m.new(owner, opts)
+    opts = opts or {}
+    local level = opts.messageType or "info"
+    assert(colors.console[level] and level ~= "background", "invalid notification level")
+    local frame = Instance.new("Frame")
+    frame.Name = "Notification"
+    frame.Size = UDim2.new(1, 0, 0, 106)
+    frame.BackgroundColor3 = colors.console.background
+    frame.BorderSizePixel = 0
+    frame.ZIndex = 310
+    frame.Parent = owner.contentFrame
+    local self = lifecycle.attach({ text = opts.text, messageType = level }, frame, owner)
+    local accent = Instance.new("Frame")
+    accent.Size = UDim2.new(0, 3, 1, 0)
+    accent.BackgroundColor3 = colors.console[level]
+    accent.BorderSizePixel = 0
+    accent.ZIndex = 311
+    accent.Parent = frame
+    local label = Instance.new("TextLabel")
+    label.BackgroundTransparency = 1
+    label.Position = UDim2.fromOffset(12, 8)
+    label.Size = UDim2.new(1, -24, 0, 60)
+    label.Font = Enum.Font.SourceSans
+    label.TextSize = 16
+    label.TextColor3 = colors.console[level]
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextYAlignment = Enum.TextYAlignment.Top
+    label.TextWrapped = true
+    label.TextTruncate = Enum.TextTruncate.AtEnd
+    label.RichText = false
+    label.Text = string.upper(level) .. ": " .. (opts.text:match("[^\r\n]*") or "")
+    label.ZIndex = 311
+    label.Parent = frame
+    local dismiss = ui.createButton(frame, { text = "Dismiss" }, 312)
+    dismiss.Size = UDim2.fromOffset(76, 24)
+    dismiss.Position = UDim2.new(1, -88, 1, -32)
+    self.scope:Connect(dismiss.MouseButton1Click, function() self:Destroy() end)
+    if opts.onDetails then
+        local details = ui.createButton(frame, { text = "Details" }, 312)
+        details.Size = UDim2.fromOffset(76, 24)
+        details.Position = UDim2.fromOffset(12, 74)
+        self.scope:Connect(details.MouseButton1Click, opts.onDetails)
+    end
+    local duration = opts.duration
+    if duration == nil then duration = if level == "error" then 0 else 5 end
+    if duration > 0 then
+        local elapsed = 0
+        self.scope:Connect(game:GetService("RunService").RenderStepped, function(dt)
+            elapsed += dt
+            if elapsed >= duration then self:Destroy() end
+        end)
+    end
+    return self
+end
+
+return m
+end function __DARKLUA_BUNDLE_MODULES.B():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.B if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.B=v end return v.c end end do local function __modImpl()
 local m = {}
 m.__index = m
 
@@ -2191,81 +2670,15 @@ local types = __DARKLUA_BUNDLE_MODULES.b()
 local tab = __DARKLUA_BUNDLE_MODULES.x()
 
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
-local dragUtil = __DARKLUA_BUNDLE_MODULES.m()
+local WindowFrame = __DARKLUA_BUNDLE_MODULES.y()
+local WindowFocus = __DARKLUA_BUNDLE_MODULES.z()
+local ConsoleWindow = __DARKLUA_BUNDLE_MODULES.A()
+local Notify = __DARKLUA_BUNDLE_MODULES.B()
 
 local g = getgenv()
 
 function m:SetVisible(value)
     self.guis.ScreenGui.Enabled = value
-end
-
-function m:_startMove()
-    local root = self.guis.Root
-    self.moveStart = root.Position
-    self.moveScale = dragUtil.scale(root.Parent)
-end
-
-function m:_move(delta)
-    local root = self.guis.Root
-    local start = self.moveStart
-    root.Position = UDim2.new(
-        start.X.Scale, start.X.Offset + delta.X / self.moveScale,
-        start.Y.Scale, start.Y.Offset + delta.Y / self.moveScale
-    )
-end
-
-function m:_startResize()
-    local root = self.guis.Root
-    self.resizeScale = dragUtil.scale(root)
-    self.parentScale = dragUtil.scale(root.Parent)
-    self.sizeStart = Vector2.new(root.AbsoluteSize.X / self.resizeScale, root.AbsoluteSize.Y / self.resizeScale)
-    self.positionStart = root.Position
-end
-
-function m:_resize(delta)
-    local root = self.guis.Root
-    local width = math.max(self.minimum.X, self.sizeStart.X + delta.X / self.resizeScale)
-    local height = math.max(self.minimum.Y, self.sizeStart.Y + delta.Y / self.resizeScale)
-    root.Size = UDim2.fromOffset(width, height)
-    root.Position = UDim2.new(
-        self.positionStart.X.Scale,
-        self.positionStart.X.Offset + (width - self.sizeStart.X) * self.resizeScale / self.parentScale * root.AnchorPoint.X,
-        self.positionStart.Y.Scale,
-        self.positionStart.Y.Offset + (height - self.sizeStart.Y) * self.resizeScale / self.parentScale * root.AnchorPoint.Y
-    )
-end
-
-function m._createTopbar(self, root: Frame): Frame
-    local frame = Instance.new("Frame")
-    frame.Name = "Topbar"
-    frame.Size = UDim2.new(1, 0, 0, 32)
-    frame.BackgroundColor3 = colors.topbar
-    frame.BorderSizePixel = 0
-    frame.Parent = root
-    frame.ZIndex = 10
-
-    dragUtil.attach(self.scope, frame, function() self:_startMove() end, function(delta) self:_move(delta) end)
-
-    local uiPadding = Instance.new("UIPadding")
-    uiPadding.PaddingLeft = UDim.new(0, 5)
-    uiPadding.PaddingRight = UDim.new(0, 5)
-    uiPadding.PaddingTop = UDim.new(0, 5)
-    uiPadding.PaddingBottom = UDim.new(0, 5)
-    uiPadding.Parent = frame
-
-    local closeBtn = Instance.new("TextButton")
-    closeBtn.Name = "CloseButton"
-    closeBtn.Size = UDim2.fromOffset(22, 22)
-    closeBtn.Position = UDim2.new(1, -22, 0, 0)
-    closeBtn.BackgroundColor3 = colors.closeButton
-    closeBtn.Text = "X"
-    closeBtn.Parent = frame
-    closeBtn.ZIndex = 15
-
-    self.scope:Connect(closeBtn.MouseButton1Click, function()
-        self:Destroy()
-    end)
-    return frame
 end
 
 function m._createSidebar(root: Frame, topbarHeight: number): ScrollingFrame
@@ -2296,7 +2709,7 @@ function m._createSidebar(root: Frame, topbarHeight: number): ScrollingFrame
     return frame
 end
 
-function m.new(opts: WindowOpts__DARKLUA_TYPE_P?): Window__DARKLUA_TYPE_S    
+function m.new(opts: WindowOpts__DARKLUA_TYPE_R?): Window__DARKLUA_TYPE_W    
 if g.simpleuiWindow then
         g.simpleuiWindow:Destroy()
     elseif g.ui then
@@ -2327,32 +2740,69 @@ if g.simpleuiWindow then
     sgui.Name = "Window"
     sgui.ResetOnSpawn = false
     sgui.IgnoreGuiInset = true
-    sgui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+    --keep each window's content together when focusing
+    sgui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     sgui.Parent = game:GetService("CoreGui")
     guis.ScreenGui = sgui
 
-    local root = Instance.new("Frame")
-    root.Name = "Root"
-    root.Size = (opts and opts.size) or UDim2.new(.5, 0, .5, 0)
-    root.AnchorPoint = Vector2.new(.5, .5)
-    root.Position = UDim2.fromScale(.5, .5)
-    root.Parent = sgui
-    root.ZIndex = 5
-    local minimum = (opts and opts.minSize) or Vector2.new(400, 260)
-    minimum = Vector2.new(math.max(400, minimum.X), math.max(260, minimum.Y))
-    self.minimum = minimum
-    local constraint = Instance.new("UISizeConstraint")
-    constraint.MinSize = minimum
-    constraint.Parent = root
-    guis.Root = root
-
     self.guis = guis
-    self.tabs = {}
-
     lifecycle.attach(self, sgui)
     self.tabs = self.components
-    guis.Topbar = m._createTopbar(self, root)
+    self.childWindowOwner = { components = {} }
+    self.focusManager = WindowFocus.new(sgui, self.scope)
+    local minimum = (opts and opts.minSize) or Vector2.new(400, 260)
+    minimum = Vector2.new(math.max(400, minimum.X), math.max(260, minimum.Y))
+    self.shell = WindowFrame.new(sgui, {
+        size = opts and opts.size, minSize = minimum,
+        onClose = function() self:Destroy() end,
+    }, self.focusManager)
+    local root = self.shell.frame
+    guis.Root = root
+    guis.Topbar = self.shell.guis.Topbar
     guis.Sidebar = m._createSidebar(root, guis.Topbar.Size.Y.Offset)
+    self.shell:AddTopbarButton("ConsoleButton", "</> Console", function() self:OpenConsole() end, 76)
+    self.scope:Add(function()
+        while #self.childWindowOwner.components > 0 do
+            self.childWindowOwner.components[#self.childWindowOwner.components]:Destroy()
+        end
+        self.shell:Destroy()
+    end)
+
+    --separate owners so these dont end up in the tab list
+    self.consoleWindow = ConsoleWindow.new(self)
+    local notifications = Instance.new("Frame")
+    notifications.Name = "Notifications"
+    notifications.BackgroundTransparency = 1
+    notifications.AnchorPoint = Vector2.new(1, 1)
+    notifications.Position = UDim2.new(1, -16, 1, -16)
+    notifications.Size = UDim2.new(1, -32, 1, -32)
+    notifications.ZIndex = 300
+    notifications.Parent = sgui
+    local notificationSize = Instance.new("UISizeConstraint")
+    notificationSize.MaxSize = Vector2.new(340, 10000)
+    notificationSize.Parent = notifications
+    local layout = Instance.new("UIListLayout")
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+    layout.Padding = UDim.new(0, 8)
+    layout.Parent = notifications
+    self.notifications = lifecycle.attach({ contentFrame = notifications }, notifications)
+    self.scope:Add(function()
+        self.notifications:Destroy()
+    end)
+    self.focusManager:RegisterOverlay(notifications, self.notifications.scope)
+    self.shell:Focus()
+    if not opts or opts.captureLogs ~= false then
+        self.scope:Connect(game:GetService("LogService").MessageOut, function(message, messageType)
+            local level = if messageType == Enum.MessageType.MessageError then "error"
+                elseif messageType == Enum.MessageType.MessageWarning then "warning" else "info"
+            if level == "error" or level == "warning" then
+                self:Notify({ text = message, messageType = level })
+            else
+                self:Log(message, level)
+            end
+        end)
+    end
 
     g.ui = root
     g.simpleuiWindow = self
@@ -2361,36 +2811,28 @@ if g.simpleuiWindow then
     end)
     self.currentTab = nil
     self.SetVisible = m.SetVisible
-    local resize = Instance.new("Frame")
-    resize.Name = "Resize"
-    resize.Size = UDim2.fromOffset(16, 16)
-    resize.Position = UDim2.new(1, -16, 1, -16)
-    resize.BackgroundColor3 = colors.sectionHeader
-    resize.ZIndex = 200
-    resize.Parent = root
-    dragUtil.attach(self.scope, resize, function() self:_startResize() end, function(delta) self:_resize(delta) end)
-    return self :: Window__DARKLUA_TYPE_S
+    return self :: Window__DARKLUA_TYPE_W
 end
 
-function m.Show(self: Window__DARKLUA_TYPE_S): ()
+function m.Show(self: Window__DARKLUA_TYPE_W): ()
     self.guis["ScreenGui"].Enabled = true
 end
 
-function m.Hide(self: Window__DARKLUA_TYPE_S): ()
+function m.Hide(self: Window__DARKLUA_TYPE_W): ()
     self.guis["ScreenGui"].Enabled = false
 end
 
-function m.Toggle(self: Window__DARKLUA_TYPE_S): ()
+function m.Toggle(self: Window__DARKLUA_TYPE_W): ()
     self.guis["ScreenGui"].Enabled = not self.guis["ScreenGui"].Enabled
 end
 
-function m.NewTab(self: Window__DARKLUA_TYPE_S, name: string, opts: TabOpts__DARKLUA_TYPE_O?): Tab__DARKLUA_TYPE_N    
+function m.NewTab(self: Window__DARKLUA_TYPE_W, name: string, opts: TabOpts__DARKLUA_TYPE_Q?): Tab__DARKLUA_TYPE_P    
 local newTab = tab.new(self, name, opts)
     table.insert(self.tabs, newTab)
     return newTab
 end
 
-function m.SelectTab(self: Window__DARKLUA_TYPE_S, tab: Tab__DARKLUA_TYPE_N): ()
+function m.SelectTab(self: Window__DARKLUA_TYPE_W, tab: Tab__DARKLUA_TYPE_P): ()
     if self.currentTab then
         self.currentTab:HideCurrentTab()
     end
@@ -2412,11 +2854,46 @@ function m:BindShortcut(key, callback, opts)
     end)
 end
 
+function m:NewWindow(opts)
+    assert(not self.destroyed, "window destroyed")
+    local window = WindowFrame.new(self.guis.ScreenGui, opts, self.focusManager, self.childWindowOwner)
+    table.insert(self.childWindowOwner.components, window)
+    return window
+end
+
+function m:OpenConsole()
+    if not self.destroyed then
+        self.consoleWindow:SetVisible(true)
+    end
+    return self.consoleWindow.console
+end
+
+function m:Log(text, messageType)
+    if self.destroyed then return end
+    self.consoleWindow.console:NewEntry(text, messageType or "info")
+end
+
+function m:Notify(opts)
+    if self.destroyed then return end
+    local notification = Notify.new(self.notifications, {
+        text = opts.text, messageType = opts.messageType, duration = opts.duration,
+        onDetails = function() self:OpenConsole() end,
+    })
+    local owner = self.notifications
+    owner.nextOrder = (owner.nextOrder or 0) + 1
+    notification.frame.LayoutOrder = owner.nextOrder
+    table.insert(owner.components, notification)
+    if #owner.components > 3 then owner.components[1]:Destroy() end
+    self:Log(opts.text, opts.messageType)
+    return notification
+end
+
 return m
-end function __DARKLUA_BUNDLE_MODULES.y():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.y if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.y=v end return v.c end end end
-local Window = __DARKLUA_BUNDLE_MODULES.y()
+end function __DARKLUA_BUNDLE_MODULES.C():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.C if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.C=v end return v.c end end end
+local Window = __DARKLUA_BUNDLE_MODULES.C()
 
 local window = Window.new({})
+window:Notify({ text = "Demo ready. Open the console from the topbar.", messageType = "success" })
 local testTab = window:NewTab("test")
 local testTab2 = window:NewTab("test2")
 

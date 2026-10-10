@@ -1,7 +1,7 @@
 local m = {}
 m.__index = m
 
-local types = require("../Types")
+local types = require("../../Types")
 local controls = require("../util/Controls")
 local lifecycle = require("../util/Lifecycle")
 

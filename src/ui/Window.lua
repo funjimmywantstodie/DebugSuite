@@ -5,85 +5,19 @@ m.__index = m
 
 local colors = require("./Colors")
 
-local types = require("./Types")
+local types = require("../Types")
 local tab = require("./Tab")
 
 local lifecycle = require("./util/Lifecycle")
-local dragUtil = require("./util/Drag")
+local WindowFrame = require("./WindowFrame")
+local WindowFocus = require("./util/WindowFocus")
+local ConsoleWindow = require("./ConsoleWindow")
+local Notify = require("./Components/Notify")
 
 local g = getgenv()
 
 function m:SetVisible(value)
     self.guis.ScreenGui.Enabled = value
-end
-
-function m:_startMove()
-    local root = self.guis.Root
-    self.moveStart = root.Position
-    self.moveScale = dragUtil.scale(root.Parent)
-end
-
-function m:_move(delta)
-    local root = self.guis.Root
-    local start = self.moveStart
-    root.Position = UDim2.new(
-        start.X.Scale, start.X.Offset + delta.X / self.moveScale,
-        start.Y.Scale, start.Y.Offset + delta.Y / self.moveScale
-    )
-end
-
-function m:_startResize()
-    local root = self.guis.Root
-    self.resizeScale = dragUtil.scale(root)
-    self.parentScale = dragUtil.scale(root.Parent)
-    self.sizeStart = Vector2.new(root.AbsoluteSize.X / self.resizeScale, root.AbsoluteSize.Y / self.resizeScale)
-    self.positionStart = root.Position
-end
-
-function m:_resize(delta)
-    local root = self.guis.Root
-    local width = math.max(self.minimum.X, self.sizeStart.X + delta.X / self.resizeScale)
-    local height = math.max(self.minimum.Y, self.sizeStart.Y + delta.Y / self.resizeScale)
-    root.Size = UDim2.fromOffset(width, height)
-    root.Position = UDim2.new(
-        self.positionStart.X.Scale,
-        self.positionStart.X.Offset + (width - self.sizeStart.X) * self.resizeScale / self.parentScale * root.AnchorPoint.X,
-        self.positionStart.Y.Scale,
-        self.positionStart.Y.Offset + (height - self.sizeStart.Y) * self.resizeScale / self.parentScale * root.AnchorPoint.Y
-    )
-end
-
-function m._createTopbar(self, root: Frame): Frame
-    local frame = Instance.new("Frame")
-    frame.Name = "Topbar"
-    frame.Size = UDim2.new(1, 0, 0, 32)
-    frame.BackgroundColor3 = colors.topbar
-    frame.BorderSizePixel = 0
-    frame.Parent = root
-    frame.ZIndex = 10
-
-    dragUtil.attach(self.scope, frame, function() self:_startMove() end, function(delta) self:_move(delta) end)
-
-    local uiPadding = Instance.new("UIPadding")
-    uiPadding.PaddingLeft = UDim.new(0, 5)
-    uiPadding.PaddingRight = UDim.new(0, 5)
-    uiPadding.PaddingTop = UDim.new(0, 5)
-    uiPadding.PaddingBottom = UDim.new(0, 5)
-    uiPadding.Parent = frame
-
-    local closeBtn = Instance.new("TextButton")
-    closeBtn.Name = "CloseButton"
-    closeBtn.Size = UDim2.fromOffset(22, 22)
-    closeBtn.Position = UDim2.new(1, -22, 0, 0)
-    closeBtn.BackgroundColor3 = colors.closeButton
-    closeBtn.Text = "X"
-    closeBtn.Parent = frame
-    closeBtn.ZIndex = 15
-
-    self.scope:Connect(closeBtn.MouseButton1Click, function()
-        self:Destroy()
-    end)
-    return frame
 end
 
 function m._createSidebar(root: Frame, topbarHeight: number): ScrollingFrame
@@ -145,32 +79,69 @@ function m.new(opts: types.WindowOpts?): types.Window
     sgui.Name = "Window"
     sgui.ResetOnSpawn = false
     sgui.IgnoreGuiInset = true
-    sgui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+    --keep each window's content together when focusing
+    sgui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     sgui.Parent = game:GetService("CoreGui")
     guis.ScreenGui = sgui
 
-    local root = Instance.new("Frame")
-    root.Name = "Root"
-    root.Size = (opts and opts.size) or UDim2.new(.5, 0, .5, 0)
-    root.AnchorPoint = Vector2.new(.5, .5)
-    root.Position = UDim2.fromScale(.5, .5)
-    root.Parent = sgui
-    root.ZIndex = 5
-    local minimum = (opts and opts.minSize) or Vector2.new(400, 260)
-    minimum = Vector2.new(math.max(400, minimum.X), math.max(260, minimum.Y))
-    self.minimum = minimum
-    local constraint = Instance.new("UISizeConstraint")
-    constraint.MinSize = minimum
-    constraint.Parent = root
-    guis.Root = root
-
     self.guis = guis
-    self.tabs = {}
-
     lifecycle.attach(self, sgui)
     self.tabs = self.components
-    guis.Topbar = m._createTopbar(self, root)
+    self.childWindowOwner = { components = {} }
+    self.focusManager = WindowFocus.new(sgui, self.scope)
+    local minimum = (opts and opts.minSize) or Vector2.new(400, 260)
+    minimum = Vector2.new(math.max(400, minimum.X), math.max(260, minimum.Y))
+    self.shell = WindowFrame.new(sgui, {
+        size = opts and opts.size, minSize = minimum,
+        onClose = function() self:Destroy() end,
+    }, self.focusManager)
+    local root = self.shell.frame
+    guis.Root = root
+    guis.Topbar = self.shell.guis.Topbar
     guis.Sidebar = m._createSidebar(root, guis.Topbar.Size.Y.Offset)
+    self.shell:AddTopbarButton("ConsoleButton", "</> Console", function() self:OpenConsole() end, 76)
+    self.scope:Add(function()
+        while #self.childWindowOwner.components > 0 do
+            self.childWindowOwner.components[#self.childWindowOwner.components]:Destroy()
+        end
+        self.shell:Destroy()
+    end)
+
+    --separate owners so these dont end up in the tab list
+    self.consoleWindow = ConsoleWindow.new(self)
+    local notifications = Instance.new("Frame")
+    notifications.Name = "Notifications"
+    notifications.BackgroundTransparency = 1
+    notifications.AnchorPoint = Vector2.new(1, 1)
+    notifications.Position = UDim2.new(1, -16, 1, -16)
+    notifications.Size = UDim2.new(1, -32, 1, -32)
+    notifications.ZIndex = 300
+    notifications.Parent = sgui
+    local notificationSize = Instance.new("UISizeConstraint")
+    notificationSize.MaxSize = Vector2.new(340, 10000)
+    notificationSize.Parent = notifications
+    local layout = Instance.new("UIListLayout")
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+    layout.Padding = UDim.new(0, 8)
+    layout.Parent = notifications
+    self.notifications = lifecycle.attach({ contentFrame = notifications }, notifications)
+    self.scope:Add(function()
+        self.notifications:Destroy()
+    end)
+    self.focusManager:RegisterOverlay(notifications, self.notifications.scope)
+    self.shell:Focus()
+    if not opts or opts.captureLogs ~= false then
+        self.scope:Connect(game:GetService("LogService").MessageOut, function(message, messageType)
+            local level = if messageType == Enum.MessageType.MessageError then "error"
+                elseif messageType == Enum.MessageType.MessageWarning then "warning" else "info"
+            if level == "error" or level == "warning" then
+                self:Notify({ text = message, messageType = level })
+            else
+                self:Log(message, level)
+            end
+        end)
+    end
 
     g.ui = root
     g.simpleuiWindow = self
@@ -179,14 +150,6 @@ function m.new(opts: types.WindowOpts?): types.Window
     end)
     self.currentTab = nil
     self.SetVisible = m.SetVisible
-    local resize = Instance.new("Frame")
-    resize.Name = "Resize"
-    resize.Size = UDim2.fromOffset(16, 16)
-    resize.Position = UDim2.new(1, -16, 1, -16)
-    resize.BackgroundColor3 = colors.sectionHeader
-    resize.ZIndex = 200
-    resize.Parent = root
-    dragUtil.attach(self.scope, resize, function() self:_startResize() end, function(delta) self:_resize(delta) end)
     return self :: types.Window
 end
 
@@ -228,6 +191,40 @@ function m:BindShortcut(key, callback, opts)
         if ctrl ~= (opts.ctrl == true) or shift ~= (opts.shift == true) then return end
         callback()
     end)
+end
+
+function m:NewWindow(opts)
+    assert(not self.destroyed, "window destroyed")
+    local window = WindowFrame.new(self.guis.ScreenGui, opts, self.focusManager, self.childWindowOwner)
+    table.insert(self.childWindowOwner.components, window)
+    return window
+end
+
+function m:OpenConsole()
+    if not self.destroyed then
+        self.consoleWindow:SetVisible(true)
+    end
+    return self.consoleWindow.console
+end
+
+function m:Log(text, messageType)
+    if self.destroyed then return end
+    self.consoleWindow.console:NewEntry(text, messageType or "info")
+end
+
+function m:Notify(opts)
+    if self.destroyed then return end
+    local notification = Notify.new(self.notifications, {
+        text = opts.text, messageType = opts.messageType, duration = opts.duration,
+        onDetails = function() self:OpenConsole() end,
+    })
+    local owner = self.notifications
+    owner.nextOrder = (owner.nextOrder or 0) + 1
+    notification.frame.LayoutOrder = owner.nextOrder
+    table.insert(owner.components, notification)
+    if #owner.components > 3 then owner.components[1]:Destroy() end
+    self:Log(opts.text, opts.messageType)
+    return notification
 end
 
 return m

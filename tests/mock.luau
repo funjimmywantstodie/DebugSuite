@@ -115,7 +115,8 @@ local input = { InputBegan = signal(), InputChanged = signal(), InputEnded = sig
 function input:GetFocusedTextBox() return self.focused end
 function input:IsKeyDown(key) return self.keys[key] == true end
 local run = { RenderStepped = signal() }
-local services = { CoreGui = Instance.new("Folder"), UserInputService = input, RunService = run }
+local services = { CoreGui = Instance.new("Folder"), UserInputService = input, RunService = run,
+    LogService = { MessageOut = signal() } }
 local game = {}
 function game:GetService(name) return services[name] end
 local globals = {}

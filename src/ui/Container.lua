@@ -72,7 +72,7 @@ function m:NewMenu(opts)
 end
 
 function m.attach(self)
-    -- Preserve the instance's existing methods (for example, a custom Clear).
+    --dont overwrite methods the component already has
     for name, method in m do
         if name ~= "attach" and self[name] == nil then self[name] = method end
     end

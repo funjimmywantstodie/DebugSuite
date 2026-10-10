@@ -1,6 +1,6 @@
 local m = {}
 
-local types = require("./Types")
+local types = require("../Types")
 
 local tabs = {} :: {types.Tab}
 

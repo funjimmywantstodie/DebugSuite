@@ -1,7 +1,7 @@
 local m = {}
 
 local colors = require("../Colors")
-local types = require("../Types")
+local types = require("../../Types")
 
 function m.createButton(parent: GuiObject, opts: types.ComponentOpts, zIndex: number?): TextButton
     local button = Instance.new("TextButton")

@@ -1,0 +1,213 @@
+# SimpleUI docs
+
+*Written by AI.*
+
+## Quick start
+
+Use this in a file inside `src/`, then bundle it with `darklua` before running
+in your executor. The library uses `getgenv`, `cloneref`, and `CoreGui`.
+
+```lua
+local Window = require("./ui/Window")
+local window = Window.new({ captureLogs = true })
+local tab = window:NewTab("Tools")
+local section = tab:NewSection("Actions", "left")
+
+section:NewButton({ text = "Hello" }, function()
+    window:Notify({ text = "Hello!", messageType = "success" })
+end)
+
+window:SelectTab(tab)
+window:Show()
+```
+
+See [src/Test.lua](src/Test.lua) for more examples and
+[src/Types.lua](src/Types.lua) for the option types.
+
+## Windows and tabs
+
+`Window.new(opts?)` accepts `size`, `minSize`, and `captureLogs` (default `true`).
+The main window's minimum size is 400 × 260. Creating a new main window destroys
+the previous SimpleUI window, cleaning up the old UI when scripts are rerun.
+
+| Main window method | Purpose |
+| --- | --- |
+| `NewTab(name, opts?)`, `SelectTab(tab)` | Create a tab, then select it explicitly. |
+| `Show()`, `Hide()`, `Toggle()`, `SetVisible(bool)` | Control the entire UI. |
+| `NewWindow(opts?)` | Create an owned floating window. |
+| `OpenConsole()` | Show the built-in console and return its console component. |
+| `Log(text, level?)` | Add a console entry; defaults to `"info"`. |
+| `Notify(opts)` | Show a notification and log its full message. |
+| `BindShortcut(key, callback, opts?)` | Bind an `Enum.KeyCode`; options are `ctrl` and `shift`. |
+| `Clear()`, `Destroy()` | Remove tabs, or destroy the entire UI. |
+
+Shortcuts require the exact Ctrl/Shift combination. They are ignored while a
+textbox is focused, input is already processed, or the main UI is hidden.
+
+`tab:NewSection(name, side?)` creates an automatically sized section in `"left"`
+(default), `"right"`, `"top"`, `"bottom"`, or `"full"`. Top and bottom span both
+columns; `"full"` uses the bottom area. Tabs scroll vertically. Destroying the
+selected tab selects the first remaining tab.
+
+Use `NewTab(name, { layout = "free" })` for manual layouts. Place panels or split
+panes directly in the tab and size them yourself; this mode has no automatic
+section layout or canvas sizing.
+
+Floating windows accept `name`, `title`, `size`, `position`, `minSize`,
+`visible`, `closeBehavior`, and `backgroundColor`. Closing destroys them by
+default; `closeBehavior = "hide"` preserves their contents. Methods:
+`Show()`, `Hide()`, `Toggle()`, `SetVisible(bool)`, `Focus()`, and
+`AddTopbarButton(name, text, callback, width?)`.
+
+Drag title bars and resize from bottom-right corners. Clicking a window or its
+controls brings it forward. Notifications stay above windows; only the
+frontmost window under the pointer can start a drag or resize.
+
+## Layouts
+
+Tabs, sections, panels, floating windows, and both halves of a split pane expose
+all `New*` component methods below. Rows expose only `NewButton` and `NewTextbox`.
+
+| Constructor | Options and behavior |
+| --- | --- |
+| `NewRow(opts?)` | `text` (instance name), `gap` (6). Children accept `width` or `fill = true`; omitted widths share remaining space. |
+| `NewPanel(opts?)` | `text` (instance name), `size`, `position`, `height` (200), `auto`, `scroll`, `layout` (`"vertical"`, `"horizontal"`, `"none"`), `gap` (6), `padding` (8), `clip` (true), `minSize`, `maxSize`. |
+| `NewSplitPane(opts?)` | `size`, `height` (320), `ratio` (0.5), `vertical` (false), `minSize` (80 pixels per half). Use `.first` and `.second` as containers; `SetRatio(number)` adjusts the draggable divider. |
+
+Sections and panels arrange children. Floating windows and split-pane halves
+need a panel or explicit positioning for multiple controls. Use
+`panel.contentFrame` for raw Roblox instances or manual layouts.
+Panels default to vertical layouts; `auto = true` fits their content, and
+`scroll = true` enables vertical scrolling. Split panes default to side by side;
+`vertical = true` stacks the halves.
+
+## Controls
+
+Callbacks are optional except menu item callbacks. Getters and callbacks return
+raw values; displayed labels and highlighting do not change application data.
+
+| Constructor | Options | Methods and callbacks |
+| --- | --- | --- |
+| `NewButton(opts, callback?)` | `text` | Callback on click; `SetText(text)`, `SetEnabled(bool)`. |
+| `NewTextbox(opts, callback?)` | `text` (placeholder) | Callback on Enter; `GetValue()`, `SetValue(text)`, `SetPlaceholder(text)`, `SetEnabled(bool)`, `Focus()`, `OnChanged(fn)`, `OnSubmitted(fn)`. |
+| `NewToggle(opts, callback?)` | `text`, `value` (false) | Callback and `OnChanged(fn)` receive a boolean; `GetValue()`, `SetValue(bool)`, `SetText(text)`, `SetEnabled(bool)`. |
+| `NewDropdown(opts, callback?)` | `text`, `options` (string array), `value` | Callback and `OnChanged(fn)` receive a string or `nil`; `GetValue()`, `SetValue(value)`, `SetOptions(options)`, `SetOpen(bool)`, `SetEnabled(bool)`. |
+| `NewMenu(opts)` | `text`, `items = { { text, callback, enabled? } }` | `SetText(text)`, `SetEnabled(bool)`, `SetOpen(bool)`. Item callbacks run on selection. |
+
+Dropdown values must be in `options`, or `nil`. Replacing options clears an
+unavailable selection. Dropdowns and menus close on Escape or when hidden.
+Toggle/dropdown value changes notify callbacks even when set programmatically;
+textbox `SetValue` fires change events without submitting.
+
+## Lists and trees
+
+`NewList(opts?)` accepts `text` (instance name), `size`, `height` (240),
+`columns`, `rowHeight` (26), and `maxRecords` (5,000). Columns use
+`{ key, text?, width? }`; columns without widths share available space.
+
+```lua
+local list = section:NewList({
+    columns = { { key = "name", text = "Name" }, { key = "count", width = 60 } },
+})
+list:SetRecords({ { id = "one", values = { name = "Example", count = 4 }, data = {} } })
+list:OnSelected(function(record) print(record and record.values.name) end)
+list:SetFilter("example")
+list:SetSort("count", false) -- descending
+```
+
+Methods: `SetRecords(records)`, `Append(records)`, `Refresh()`,
+`SetFilter(text)`, `SetSort(key, ascending?)`, `Select(id)`, `OnSelected(fn)`,
+and `Clear()`. IDs must be unique strings or numbers. `Append` replaces matching
+IDs; exceeding the limit drops the oldest records. Filters search all values
+by case-insensitive substring. Header clicks toggle sorting; numeric values
+sort numerically. Filtering/removing the selected record emits `nil`.
+
+`NewTree(opts?)` accepts `text` (instance name), `size`, `height` (240),
+`maxDepth` (32), and `emptyText` (`"No items"`). Nodes use
+`{ id, text, data?, children?, loadChildren? }` with unique string/number IDs.
+
+```lua
+local tree = section:NewTree()
+tree:SetNodes({ { id = "root", text = "Arguments", loadChildren = function()
+    return { { id = "value", text = "value = 42", data = 42 } }
+end } })
+tree:Expand("root", true)
+tree:OnSelected(function(node) print(node and node.data) end)
+```
+
+Methods: `SetNodes(nodes)`, `Expand(id, bool)`, `Select(id)`, `OnSelected(fn)`,
+and `Clear()`. Lazy children load once per node until `SetNodes` resets the
+tree. Selection and expansion target visible nodes; clicking a branch toggles
+expansion and selects it. Resetting a selected tree emits `nil`. Lists and trees
+render only rows near the viewport.
+
+## Text and syntax highlighting
+
+`NewTextViewer(opts?)` accepts `text`, `size`, `height` (200), `editable`
+(false), `syntax`, and `syntaxTheme`. Methods: `SetText(text)`, `GetText()`,
+`SetSyntax(syntax)`, `OnChanged(fn)`, and `Clear()`.
+
+Use `syntax = "lua"` or `"luau"` to highlight; omit it or use `false` for plain
+text. `SetSyntax(false)` restores raw display for native text selection. Viewers
+scroll in both directions and store the original text even while highlighted.
+To copy everything, use `setclipboard(viewer:GetText())` in a supported runtime.
+
+Viewers and consoles accept `syntaxTheme` with `#RRGGBB` overrides for
+`keyword`, `builtin`, `string`, `comment`, `number`, `operator`, `identifier`,
+and `whitespace`. The lexer recognizes keywords, common built-ins,
+escaped/long-bracket/backtick strings, comments, and decimal/hex/binary numbers.
+Backtick strings are colored as a whole. Highlighting does not resolve variables
+or validate code.
+
+For other RichText controls, require `./ui/SyntaxHighlight` from `src/` and use
+`Highlight(source, theme?)`, `Escape(text)`, or `Tokenize(source)`. Tokens contain
+`kind`, raw `text`, and inclusive byte offsets `start`/`finish`. Enable the
+control's `RichText` property when using `Highlight`.
+
+## Consoles and notifications
+
+`NewConsole(opts?)` accepts `text` (instance name), `height` (200), `maxEntries`
+(1,000), `autoScroll` (true), `syntax`, and `syntaxTheme`.
+
+| Console method | Purpose |
+| --- | --- |
+| `NewEntry(text, level)` | Add an entry: `"info"`, `"success"`, `"warning"`, or `"error"`. |
+| `Append(entries)` | Add `{ text, messageType? }` entries; default level is `"info"`. |
+| `SetPaused(bool)` | Drop incoming entries while paused. |
+| `SetAutoScroll(bool)` | Enable/disable scrolling to new entries. |
+| `Clear()` | Remove all entries. |
+
+Entries wrap; the oldest are removed at the limit. Highlighting treats each
+entry independently. **</> Console** opens the main window's resizable console,
+which keeps 1,000 entries even while hidden. Closing hides it; **Clear** removes
+history. Its minimum size is 360 × 200.
+
+By default, `LogService.MessageOut` feeds this console, including other client
+scripts; warnings and errors also create notifications. Set `captureLogs = false`
+for manual logging. Output bypassing LogService needs an explicit `Log` or `Notify`.
+
+```lua
+window:Log("Starting refresh", "info")
+local notice = window:Notify({ text = "Saved", messageType = "success", duration = 3 })
+notice:Destroy() -- dismiss early
+```
+
+Notifications accept `text`, `messageType` (default `"info"`), and `duration`
+in seconds. Errors stay until dismissed; other levels default to five seconds.
+`duration = 0` keeps them visible. At most three are shown; the full message is
+logged, and **Details** opens the console.
+
+## Cleanup and customization
+
+Components expose `.frame`, `.scope`, `SetVisible(bool)`, `Clear()`, and
+`Destroy()`. `Clear` removes child components or displayed data. `Destroy` also
+disconnects events and releases instances. Parents clean up children; destroying
+the main window also removes floating windows, notifications, and log capture.
+
+Use `component.scope:Connect(signal, callback)` for your own handlers and
+`component.scope:Add(callback)` for cleanup functions. Event methods return
+connections you can disconnect early.
+
+Edit [src/ui/Colors.lua](src/ui/Colors.lua) for UI colors, or use `syntaxTheme`
+for code colors. Access `.frame`, `.contentFrame` (containers), `.button`
+(controls), or `.textbox` (text viewers) to customize Roblox properties.

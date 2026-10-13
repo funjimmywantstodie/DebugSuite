@@ -1,0 +1,8 @@
+{
+  "luau-lsp.types.definitionFiles": [".vscode/volt.d.luau"],
+  "files.associations": {
+    "*.lua": "luau"
+  },
+  "luau-lsp.platform.type": "roblox",
+  "luau-lsp.sourcemap.enabled": false
+}

@@ -26,26 +26,25 @@ See [src/Test.lua](src/Test.lua) for more examples and
 
 ## Options (`opts`)
 
-`opts` is a Luau table of named settings: `NewButton({ text = "Run" }, callback)`.
-`opts?` means you may omit the table or pass `nil`; `{}` uses defaults.
-Table shapes such as `{ key, text?, width? }` describe named fields, not positional
-entries; `?` marks an optional field.
-Keys are case-sensitive: use `text`, `size`, and `position`, not `Text`, `Size`,
-or `Position`. Only the keys listed for each constructor are supported.
-
-`size`/`position` take `UDim2`; `minSize`/`maxSize` take `Vector2`, except
-split-pane `minSize`, which is a pixel number. Heights, widths, gaps, and padding
-are pixel numbers; flags are booleans. Parentheses below show default values.
-Controls require `text`; menus also require `items`, and dropdowns use an
-`options` array of strings. Other settings are optional.
+`opts` is just a table: `section:NewButton({ text = "Run" }, callback)`.
+`opts?` means the table is optional; omit it or use `{}` for defaults.
+In the tables below, `?` means optional. Keys are case-sensitive (`size`, not
+`Size`). Heights, widths, gaps, and padding are in pixels.
 
 ## Windows and tabs
 
-`Window.new(opts?)` accepts `size` (`UDim2.fromScale(0.5, 0.5)`),
-`minSize` (`Vector2.new(400, 260)`), and `captureLogs` (true).
-The main window's minimum size is clamped to at least 400 × 260; it starts visible
-and centered. Creating a new main window destroys
-the previous SimpleUI window, cleaning up the old UI when scripts are rerun.
+### Main window
+
+Syntax: `Window.new(opts: table?) → Window`
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `size` | `UDim2?` | Initial size; default `UDim2.fromScale(0.5, 0.5)`. |
+| `minSize` | `Vector2?` | Minimum size; default `Vector2.new(400, 260)`, clamped to at least that size. |
+| `captureLogs` | `boolean?` | Capture LogService output; default `true`. |
+
+Starts visible and centered. Creating a main window destroys the previous
+SimpleUI window and cleans up its UI.
 
 | Main window method | Purpose |
 | --- | --- |
@@ -58,20 +57,49 @@ the previous SimpleUI window, cleaning up the old UI when scripts are rerun.
 | `BindShortcut(key, callback, opts?)` | Bind an `Enum.KeyCode`; options are `ctrl` and `shift`. |
 | `Clear()`, `Destroy()` | Remove tabs, or destroy the entire UI. |
 
-Shortcuts require the exact Ctrl/Shift combination. They are ignored while a
-textbox is focused, input is already processed, or the main UI is hidden.
+Shortcut options for `window:BindShortcut(key, callback, opts?)`:
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `ctrl` | `boolean?` | Require Ctrl; default `false`. |
+| `shift` | `boolean?` | Require Shift; default `false`. |
+
+Returns an `RBXScriptConnection`. Shortcuts require the exact Ctrl/Shift combination.
+They are ignored while a textbox is focused, input is processed, or the UI is hidden.
 
 `tab:NewSection(name, side?)` creates an automatically sized section in `"left"`
 (default), `"right"`, `"top"`, `"bottom"`, or `"full"`. Top and bottom span both
 columns; `"full"` uses the bottom area. Tabs scroll vertically. Destroying the
 selected tab selects the first remaining tab.
 
-Tab `opts` accepts only `layout`: `"sections"` (default) or `"free"`.
+### Tabs
+
+Syntax: `window:NewTab(name: string, opts: table?) → Tab`
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `layout` | `string?` | `"sections"` (default) or `"free"` for manual placement. |
+
 Use `NewTab(name, { layout = "free" })` for manual layouts. Place panels or split
 panes directly in the tab and size them yourself; this mode has no automatic
 section layout or canvas sizing.
 
-Use `window:NewWindow(opts?)` for inspectors alongside the main UI:
+### Floating windows
+
+Syntax: `window:NewWindow(opts: table?) → FloatingWindow`
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `name` | `string?` | Instance name; default `"Root"`. |
+| `title` | `string?` | Title-bar text; default `""`. |
+| `size` | `UDim2?` | Initial size; default `UDim2.fromScale(0.5, 0.5)`. |
+| `position` | `UDim2?` | Center position; default `UDim2.fromScale(0.5, 0.5)`. |
+| `minSize` | `Vector2?` | Minimum size; default `Vector2.new(400, 260)`. |
+| `visible` | `boolean?` | Start visible; default `true`. |
+| `closeBehavior` | `string?` | `"destroy"` (default) or `"hide"` to preserve contents. |
+| `backgroundColor` | `Color3?` | Background; default `Colors.component`. |
+
+Example—an inspector alongside the main UI:
 
 ```lua
 local inspector = window:NewWindow({
@@ -83,11 +111,6 @@ local inspector = window:NewWindow({
 inspector:NewTextViewer({ text = "Select a function", size = UDim2.fromScale(1, 1) })
 ```
 
-Floating options: `name` (`"Root"`), `title` (`""`), `size`
-(`UDim2.fromScale(0.5, 0.5)`), `position` (`UDim2.fromScale(0.5, 0.5)`),
-`minSize` (`Vector2.new(400, 260)`), `visible` (true), `closeBehavior`
-(`"destroy"`), and `backgroundColor` (`Color3`, defaults to `Colors.component`).
-Position refers to the window's center. `closeBehavior = "hide"` preserves contents.
 Methods:
 `Show()`, `Hide()`, `Toggle()`, `SetVisible(bool)`, `Focus()`, and
 `AddTopbarButton(name, text, callback, width?)` (width defaults to 60 pixels;
@@ -102,37 +125,111 @@ frontmost window under the pointer can start a drag or resize.
 Tabs, sections, panels, floating windows, and both halves of a split pane expose
 all `New*` component methods below. Rows expose only `NewButton` and `NewTextbox`.
 
-| Constructor | Options and behavior |
-| --- | --- |
-| `NewRow(opts?)` | `text` (instance name), `gap` (6). Children accept `width` or `fill = true`; omitted widths share remaining space. |
-| `NewPanel(opts?)` | `text` (instance name), `size`, `position` (zero), `height` (200), `auto` (false), `scroll` (false), `layout` (`"vertical"` by default; also `"horizontal"`, `"none"`), `gap` (6), `padding` (8), `clip` (true), `minSize`, `maxSize`. |
-| `NewSplitPane(opts?)` | `size`, `height` (320), `ratio` (0.5), `vertical` (false), `minSize` (80 pixels per half). Use `.first` and `.second` as containers; `SetRatio(number)` adjusts the draggable divider. |
+### Row
+
+Syntax: `container:NewRow(opts: table?) → Row`
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `text` | `string?` | Instance name; default `"Row"`. |
+| `gap` | `number?` | Space between controls; default `6`. |
+
+Row buttons/textboxes also accept:
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `width` | `number?` | Fixed width; omitted controls share remaining space. |
+| `fill` | `boolean?` | Share remaining space, overriding `width`; default `false`. |
+
+### Panel
+
+Syntax: `container:NewPanel(opts: table?) → Container`
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `text` | `string?` | Instance name; default `"Panel"`. |
+| `size` | `UDim2?` | Full width × `height` by default. |
+| `position` | `UDim2?` | Position; default `UDim2.new()`. |
+| `height` | `number?` | Height when `size` is omitted; default `200`. |
+| `auto` | `boolean?` | Fit content height, overriding `size`/`height`; default `false`. |
+| `scroll` | `boolean?` | Enable vertical scrolling; default `false`. |
+| `layout` | `string?` | `"vertical"` (default), `"horizontal"`, or `"none"`. |
+| `gap` | `number?` | Space between children; default `6`. |
+| `padding` | `number?` | Content inset; default `8`. |
+| `clip` | `boolean?` | Clip overflowing content; default `true`. |
+| `minSize` | `Vector2?` | Optional minimum size constraint. |
+| `maxSize` | `Vector2?` | Optional maximum size constraint. |
+
+### Split pane
+
+Syntax: `container:NewSplitPane(opts: table?) → SplitPane`
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `size` | `UDim2?` | Full width × `height` by default. |
+| `height` | `number?` | Height when `size` is omitted; default `320`. |
+| `ratio` | `number?` | First half’s share; default `0.5`, clamped by minimum sizes. |
+| `vertical` | `boolean?` | Stack halves instead of side by side; default `false`. |
+| `minSize` | `number?` | Minimum pixels per half, space permitting; default `80`. |
+
+Returns `.first` and `.second` containers; `SetRatio(number)` adjusts the divider.
 
 Sections and panels arrange children. Floating windows and split-pane halves
 need a panel or explicit positioning for multiple controls. Use
 `panel.contentFrame` for raw Roblox instances or manual layouts.
-Sized components default to full parent width and their listed height; `size`
-overrides `height`. Panel `auto = true` overrides both with full width and automatic
-height; `scroll = true` enables vertical scrolling. Layouts control child positions;
-use `layout = "none"` for manual placement. Split panes default to side by side;
-`vertical = true` stacks the halves. Ratios are clamped to each half's minimum size.
-Row `fill` (false) overrides `width` when true; hidden children release their space.
+Panel `auto = true` also sets full width. Layouts control child positions;
+use `layout = "none"` for manual placement.
+Hidden row children release their space.
 
 ## Controls
 
 Callbacks are optional except menu item callbacks. Getters and callbacks return
 raw values; displayed labels and highlighting do not change application data.
 
-| Constructor | Options | Methods and callbacks |
-| --- | --- | --- |
-| `NewButton(opts, callback?)` | `text` | Callback on click; `SetText(text)`, `SetEnabled(bool)`. |
-| `NewTextbox(opts, callback?)` | `text` (placeholder) | Callback on Enter; `GetValue()`, `SetValue(text)`, `SetPlaceholder(text)`, `SetEnabled(bool)`, `Focus()`, `OnChanged(fn)`, `OnSubmitted(fn)`. |
-| `NewToggle(opts, callback?)` | `text`, `value` (false) | Callback and `OnChanged(fn)` receive a boolean; `GetValue()`, `SetValue(bool)`, `SetText(text)`, `SetEnabled(bool)`. |
-| `NewDropdown(opts, callback?)` | `text`, `options` (string array), `value` | Callback and `OnChanged(fn)` receive a string or `nil`; `GetValue()`, `SetValue(value)`, `SetOptions(options)`, `SetOpen(bool)`, `SetEnabled(bool)`. |
-| `NewMenu(opts)` | `text`, `items = { { text, callback, enabled? } }` | `SetText(text)`, `SetEnabled(bool)`, `SetOpen(bool)`. Item callbacks run on selection. |
+| Constructor → Return | Methods and callbacks |
+| --- | --- |
+| `NewButton(opts, callback?) → Button` | Callback on click; `SetText(text)`, `SetEnabled(bool)`. |
+| `NewTextbox(opts, callback?) → Textbox` | Callback on Enter; `GetValue()`, `SetValue(text)`, `SetPlaceholder(text)`, `SetEnabled(bool)`, `Focus()`, `OnChanged(fn)`, `OnSubmitted(fn)`. |
+| `NewToggle(opts, callback?) → Toggle` | Callback and `OnChanged(fn)` receive a boolean; `GetValue()`, `SetValue(bool)`, `SetText(text)`, `SetEnabled(bool)`. |
+| `NewDropdown(opts, callback?) → Dropdown` | Callback and `OnChanged(fn)` receive a string or `nil`; `GetValue()`, `SetValue(value)`, `SetOptions(options)`, `SetOpen(bool)`, `SetEnabled(bool)`. |
+| `NewMenu(opts) → Menu` | `SetText(text)`, `SetEnabled(bool)`, `SetOpen(bool)`; item callbacks run on selection. |
 
-Controls start enabled; menu items default to `enabled = true`. Textboxes start
-empty: `text` sets their placeholder, and `SetValue` sets their contents.
+All control constructors take a required `opts: table` and return the component.
+The optional callback is a function; buttons pass no arguments, textboxes pass
+text, toggles pass a boolean, and dropdowns pass a string or `nil`.
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `text` | `string` | Required on every control; caption, or textbox placeholder. |
+
+Toggle options:
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `value` | `boolean?` | Initial value; default `false`. |
+
+Dropdown options:
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `options` | `{string}` | Choices, e.g. `{ "One", "Two" }`. |
+| `value` | `string?` | Initial selection; default `nil`. |
+
+Menu options:
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `items` | `{MenuItem}` | Required array of item tables; fields below. |
+
+Each menu item:
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `text` | `string` | Required item caption. |
+| `callback` | `() → ()` | Required function called on selection. |
+| `enabled` | `boolean?` | Allow selection; default `true`. |
+
+Controls start enabled. Textboxes start empty; use `SetValue` to set their contents.
 Dropdown values must be in `options`, or `nil`. Replacing options clears an
 unavailable selection; an invalid initial value is cleared. Dropdowns and menus
 close on Escape, selection, disabling, or when hidden, and expand the control's
@@ -144,11 +241,34 @@ value change restores its original label.
 
 ## Lists and trees
 
-`NewList(opts?)` accepts `text` (instance name), `size`, `height` (240),
-`columns`, `rowHeight` (26), and `maxRecords` (5,000). Columns use
-`{ key, text?, width? }`; `text` defaults to `key`. The default column is
-`{ key = "text", text = "Text" }`; columns without widths share space (minimum
-60 pixels). Records use `{ id, values = { [columnKey] = value }, data? }`.
+### List
+
+Syntax: `container:NewList(opts: table?) → List`
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `text` | `string?` | Instance name; default `"List"`. |
+| `size` | `UDim2?` | Full width × `height` by default. |
+| `height` | `number?` | Height when `size` is omitted; default `240`. |
+| `columns` | `{Column}?` | Column tables; default `{ { key = "text", text = "Text" } }`. |
+| `rowHeight` | `number?` | Row height; default `26`, minimum `16`. |
+| `maxRecords` | `number?` | Record limit; default `5000`, minimum `1`. |
+
+Each column:
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `key` | `string` | Required key in `record.values`. |
+| `text` | `string?` | Header caption; defaults to `key`. |
+| `width` | `number?` | Fixed width; otherwise shares space, minimum 60 pixels. |
+
+Each record passed to `SetRecords`/`Append`:
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `id` | `string or number` | Required unique ID. |
+| `values` | `table` | Required values keyed by column key, e.g. `{ name = "Example" }`. |
+| `data` | `any?` | Optional payload returned with selection. |
 
 ```lua
 local list = section:NewList({
@@ -168,11 +288,29 @@ by case-insensitive substring. Header clicks toggle sorting; numeric values
 sort numerically; `SetSort` defaults to ascending. `Select` targets filtered
 records; unknown IDs do nothing. Filtering/removing the selected record emits
 `nil`; replacing it emits the new record. `Refresh()` reapplies filtering/sorting
-after editing record values. `rowHeight` is at least 16; `maxRecords` is at least 1.
+after editing record values.
 
-`NewTree(opts?)` accepts `text` (instance name), `size`, `height` (240),
-`maxDepth` (32), and `emptyText` (`"No items"`). Nodes use
-`{ id, text, data?, children?, loadChildren? }` with unique string/number IDs.
+### Tree
+
+Syntax: `container:NewTree(opts: table?) → Tree`
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `text` | `string?` | Instance name; default `"Tree"`. |
+| `size` | `UDim2?` | Full width × `height` by default. |
+| `height` | `number?` | Height when `size` is omitted; default `240`. |
+| `maxDepth` | `number?` | Deepest displayed depth; default `32` (roots are depth 0). |
+| `emptyText` | `string?` | Empty-state caption; default `"No items"`. |
+
+Each node passed to `SetNodes` or returned by a lazy loader:
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `id` | `string or number` | Required unique ID across the tree. |
+| `text` | `string` | Required node caption. |
+| `data` | `any?` | Optional payload returned with selection. |
+| `children` | `{TreeNode}?` | Child nodes; default none. |
+| `loadChildren` | `(() → {TreeNode})?` | Optional function returning children on first expansion. |
 
 ```lua
 local tree = section:NewTree()
@@ -187,21 +325,29 @@ Methods: `SetNodes(nodes)`, `Expand(id, bool)`, `Select(id)`, `OnSelected(fn)`,
 and `Clear()`. Lazy children load once per node until `SetNodes` resets the
 tree. Selection and expansion target visible nodes; clicking a branch toggles
 expansion and selects it. Resetting a selected tree emits `nil`. Lists and trees
-render only rows near the viewport. Tree roots have depth 0; nodes deeper than
-`maxDepth` are hidden. Lazy loaders take no arguments and return a node array;
-failures warn and allow retry. Unknown or collapsed-child IDs do nothing.
+render only rows near the viewport. Nodes deeper than `maxDepth` are hidden.
+Lazy-loader failures warn and allow retry. Unknown or collapsed-child IDs do nothing.
 
 ## Text and syntax highlighting
 
-`NewTextViewer(opts?)` accepts `text`, `size`, `height` (200), `editable`
-(false), `syntax`, and `syntaxTheme`. Methods: `SetText(text)`, `GetText()`,
-`SetSyntax(syntax)`, `OnChanged(fn)`, and `Clear()`.
-`text` is initial content; `OnChanged` receives raw text for edits and `SetText`.
+Syntax: `container:NewTextViewer(opts: table?) → TextViewer`
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `text` | `string?` | Initial content; default `""`. |
+| `size` | `UDim2?` | Full width × `height` by default. |
+| `height` | `number?` | Height when `size` is omitted; default `200`. |
+| `editable` | `boolean?` | Allow editing; default `false`. |
+| `syntax` | `string? or false` | `"lua"`, `"luau"`, or `false`/omitted for plain text. |
+| `syntaxTheme` | `table?` | Token-color overrides; see below. |
+
+Methods: `SetText(text)`, `GetText()`, `SetSyntax(syntax)`, `OnChanged(fn)`,
+and `Clear()`. `OnChanged` receives raw text for edits and `SetText`.
 
 Use `syntax = "lua"` or `"luau"` to highlight; omit it or use `false` for plain
 text; other syntax values raise an error. `SetSyntax(false)` restores raw display
-for native text selection. Viewers
-scroll in both directions and store the original text even while highlighted.
+for native text selection. Viewers scroll in both directions and store the
+original text even while highlighted.
 To copy everything, use `setclipboard(viewer:GetText())` in a supported runtime.
 
 Viewers and consoles accept `syntaxTheme` with `#RRGGBB` overrides for
@@ -218,8 +364,18 @@ control's `RichText` property when using `Highlight`.
 
 ## Consoles and notifications
 
-`NewConsole(opts?)` accepts `text` (instance name), `height` (200), `maxEntries`
-(1,000), `autoScroll` (true), `syntax`, and `syntaxTheme`.
+### Console
+
+Syntax: `container:NewConsole(opts: table?) → Console`
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `text` | `string?` | Instance name; default `"Console"`. |
+| `height` | `number?` | Full-width console height; default `200`. |
+| `maxEntries` | `number?` | Entry limit; default `1000`, minimum `1`. |
+| `autoScroll` | `boolean?` | Scroll to new entries; default `true`. |
+| `syntax` | `string? or false` | `"lua"`, `"luau"`, or `false`/omitted for plain text. |
+| `syntaxTheme` | `table?` | Token-color overrides; see text highlighting above. |
 
 | Console method | Purpose |
 | --- | --- |
@@ -229,10 +385,9 @@ control's `RichText` property when using `Highlight`.
 | `SetAutoScroll(bool)` | Enable/disable scrolling to new entries. |
 | `Clear()` | Remove all entries. |
 
-Entries wrap; the oldest are removed at the limit (`maxEntries` is at least 1).
-Pausing discards entries rather than buffering them; `Clear` keeps pause and
-auto-scroll settings. Highlighting treats each
-entry independently. **</> Console** opens the main window's resizable console,
+Entries wrap; the oldest are removed at the limit. `Clear` keeps pause and
+auto-scroll settings. Highlighting treats each entry independently.
+**</> Console** opens the main window's resizable console,
 which keeps 1,000 entries even while hidden. Closing hides it; **Clear** removes
 history. Its minimum size is 360 × 200.
 
@@ -246,12 +401,19 @@ local notice = window:Notify({ text = "Saved", messageType = "success", duration
 notice:Destroy() -- dismiss early
 ```
 
-`Notify` returns a notification, or `nil` after the main window is destroyed.
-Notifications require `text` and accept `messageType` (default `"info"`) and `duration`
-in seconds. Errors stay until dismissed; other levels default to five seconds.
-`duration = 0` keeps them visible. At most three are shown; the full message is
-logged, and **Details** opens the console. The toast shows only the first line;
-when a fourth arrives, the oldest toast is dismissed.
+### Notification
+
+Syntax: `window:Notify(opts: table) → Notification?`
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `text` | `string` | Required message; the full text is logged. |
+| `messageType` | `string?` | `"info"` (default), `"success"`, `"warning"`, or `"error"`. |
+| `duration` | `number?` | Seconds before dismissal; default `0` for errors, `5` otherwise. `0` keeps it visible. |
+
+Returns `nil` after the main window is destroyed. At most three toasts are shown;
+a fourth dismisses the oldest. Toasts show only the first line; **Details** opens
+the console with the full message.
 
 ## Cleanup and customization
 

@@ -61,6 +61,9 @@ inspector:AddTopbarButton("Refresh", "Refresh", refresh, 70)
 actions:NewButton({ text = "View table" }, function()
     inspector:Show() -- Reuse the same window after closing it.
 end)
+actions:NewButton({ text = "Toggle inspector" }, function()
+    inspector:Toggle() -- Hide if open; show if hidden.
+end)
 
 refresh()
 window:SelectTab(tab)

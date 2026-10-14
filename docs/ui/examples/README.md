@@ -12,7 +12,7 @@ rerunning replaces the previous UI and cleans up its events and windows.
 | Example | What to try |
 | --- | --- |
 | [Basic tabs](basic-tabs.lua) | Create two tabs, switch with buttons, submit a textbox with Enter, update a viewer. |
-| [Table inspector](table-inspector.lua) | Click **View table**, expand nested tables, select raw values, refresh, close and reopen. |
+| [Table inspector](table-inspector.lua) | Click **View table** to open, or **Toggle inspector** to show/hide; expand nested tables, select raw values, refresh, close and reopen. |
 | [Workbench](workbench.lua) | Resize a split pane, filter/sort/select a list, edit highlighted text, use toggles, dropdowns, menus, logs, and notifications. |
 
 ## Build and run

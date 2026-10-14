@@ -2890,7 +2890,13 @@ end
 
 return m
 end function __DARKLUA_BUNDLE_MODULES.C():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.C if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.C=v end return v.c end end do local function __modImpl()
+return {
+    InitTimes = true,--whether to show init times for each module
+    InitLogs = true --weather to show init logs for each module
+    
+}end function __DARKLUA_BUNDLE_MODULES.D():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.D if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.D=v end return v.c end end do local function __modImpl()
 local m = {}
+m.Name = "Functions"
 
 local types = __DARKLUA_BUNDLE_MODULES.b()
 function m.init(window: Window__DARKLUA_TYPE_W)
@@ -2908,8 +2914,9 @@ function m.init(window: Window__DARKLUA_TYPE_W)
     return tab
 end
 
-return m end function __DARKLUA_BUNDLE_MODULES.D():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.D if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.D=v end return v.c end end do local function __modImpl()
+return m end function __DARKLUA_BUNDLE_MODULES.E():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.E if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.E=v end return v.c end end do local function __modImpl()
 local m = {}
+m.Name = "GC"
 
 local types = __DARKLUA_BUNDLE_MODULES.b()
 function m.init(window: Window__DARKLUA_TYPE_W)
@@ -2927,19 +2934,29 @@ function m.init(window: Window__DARKLUA_TYPE_W)
     return tab
 end
 
-return m end function __DARKLUA_BUNDLE_MODULES.E():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.E if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.E=v end return v.c end end do local function __modImpl()
+return m end function __DARKLUA_BUNDLE_MODULES.F():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.F if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.F=v end return v.c end end do local function __modImpl()
 local m = {}
+m.Name = "Compatibility"
 
-local upvalue = "fail"
-local function testFunction()
-    local _val = upvalue
-    return "fail"
+--things for testing
+local upvalue
+local tbl = {}
+local function luaClosure()
+    return "fail", upvalue
 end
+--only assign if exec supports newcclosure
+local cClosure: () -> string
+upvalue = "fail"
+
 --only check the most used globals that i actually need, no point in remaking sunc lol
 local execGlobals = {
     "hookfunction",
     "restorefunction",
-    "filtergc"
+    "filtergc",
+    "hookmetamethod",
+    "islclosure",
+    "iscclosure",
+    "newcclosure",
 }
 
 local debugGlobals = {
@@ -2952,7 +2969,7 @@ local debugGlobals = {
 }
 
 function m.init()
-    --===== REQUIRED GLOBALS =====
+    --REQUIRED GLOBALS
     if not getgenv then return false, "missing getgenv" end
     for namespace, name in {
         [getgenv()] = execGlobals,
@@ -2965,89 +2982,142 @@ function m.init()
         end
     end
     
-    --===== CONSTANT =====
-    local const1 = debug.getconstant(testFunction, 1)
+    --CONSTANT
+    local const1 = debug.getconstant(luaClosure, 1)
     if not const1 then
         return false, "Failed to get constant"
     end
 
-    if const1 ~= debug.getconstants(testFunction)[1] then
+    if const1 ~= debug.getconstants(luaClosure)[1] then
         return false, "getconstants mismatch"
     end
 
-    debug.setconstant(testFunction, 1, "yes")
-    if debug.getconstant(testFunction, 1) ~= "yes" then
+    debug.setconstant(luaClosure, 1, "yes")
+    if debug.getconstant(luaClosure, 1) ~= "yes" then
         return false, "Failed to set constant"
     end
     --reset for later tests
-    debug.setconstant(testFunction, 1, "fail")
+    debug.setconstant(luaClosure, 1, "fail")
 
-    --===== UPVALUE =====
-    local uv = debug.getupvalue(testFunction,1)
+    --UPVALUE
+    local uv = debug.getupvalue(luaClosure,1)
     if not uv then
         return false, "Failed to get upvalue"
     end
-    if uv ~= debug.getupvalues(testFunction)[1] then
+    if uv ~= debug.getupvalues(luaClosure)[1] then
         return false, "getupvalues mismatch"
     end
 
-    debug.setupvalue(testFunction, 1, "yes")
-    if debug.getupvalue(testFunction, 1) ~= "yes" then
+    debug.setupvalue(luaClosure, 1, "yes")
+    if debug.getupvalue(luaClosure, 1) ~= "yes" then
         return false, "Failed to set upvalue"
     end
     --reset for later tests
-    debug.setupvalue(testFunction, 1, "fail")
+    debug.setupvalue(luaClosure, 1, "fail")
 
-    --===== GC =====
+    --GC
     --run gc tests before function tests since the function ones add referances to gc that get in the way
     local found = filtergc("function", {IgnoreExecutor = false, Constants = {"fail"}, UpvalueCount = 1})
     if not next(found) then
         return false, "Failed to find function in filtergc"
     end
 
-    if not table.find(found, testFunction) then
+    if not table.find(found, luaClosure) then
         return false, "filtergc did not return the correct function"
     end
 
-    --FUNCTION-----
-    hookfunction(testFunction, function()
+    --CLOSURES
+    cClosure = newcclosure(function ()
+        return "fail", upvalue
+    end)
+
+    hookfunction(luaClosure, function()
         return "yes"
     end)
-    if testFunction() ~= "yes" then
+    if luaClosure() ~= "yes" then
         return false, "Failed to hook function"
     end
 
-    restorefunction(testFunction)
-    if testFunction() ~= "fail" then
+    restorefunction(luaClosure)
+    if luaClosure() ~= "fail" then
         return false, "Failed to restore function"
     end
 
-    return true
+    setmetatable(tbl, {
+        __index = function()
+            return "fail"
+        end
+    })
+    local mt = getmetatable(tbl)
+    mt.__namecall = function()
+        return "fail"
+    end
+    hookmetamethod(tbl, "__index", function()
+        return "yes"
+    end)
+    local result = tbl.nonsense
+    
+    if result ~= "yes" then
+        return false, "Failed to hook metamethod"
+    end
+    restorefunction(getmetatable(tbl).__index)
+
+    if not islclosure(luaClosure) then
+        return false, "Failed to identify lua closure"
+    end
+
+    if not iscclosure(cClosure) then
+        return false, "Failed to identify c closure"
+    end
+
+    local tests = #execGlobals + #debugGlobals
+    return true, `{tests}/{tests} compatibility tests passed`
 end
 
-return m end function __DARKLUA_BUNDLE_MODULES.F():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.F if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.F=v end return v.c end end end
+return m end function __DARKLUA_BUNDLE_MODULES.G():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.G if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.G=v end return v.c end end end--[[
+every module passes fails as 
+(false, reason: string)
+and some do optional msgs at the end for debugging
+]]
+
+
 local Window = __DARKLUA_BUNDLE_MODULES.C()
+local Config = __DARKLUA_BUNDLE_MODULES.D()
 
 local mainWindow = Window.new({})
 
 local modules = {
-__DARKLUA_BUNDLE_MODULES.D()
+__DARKLUA_BUNDLE_MODULES.E()
 ,
-__DARKLUA_BUNDLE_MODULES.E(),
-__DARKLUA_BUNDLE_MODULES.F()
+__DARKLUA_BUNDLE_MODULES.F(),
+__DARKLUA_BUNDLE_MODULES.G()
 
 
 } 
 
+local loadedModules = 0
 for _, mod in modules do
-    local callOk, initOk, initErr = pcall(function() return mod.init(mainWindow) end)
+    local startTime = os.clock()
+    local callOk, initOk, initMsg = pcall(function() return mod.init(mainWindow) end)
     if not callOk then
-        warn(`Error initializing module: {initOk}`)
+        warn(`Error initializing module {mod.Name}: {initOk}`)
+        continue
     elseif not initOk then
-        warn(`Module initialization failed: {initErr}`)
+        warn(`Module initialization failed: {initMsg}`)
+        continue
     end
+    local deltaTime = os.clock() - startTime
+    if Config.InitTimes then
+        print(`[INIT]: {mod.Name} initialized in {deltaTime} seconds.`)
+    end
+    if Config.InitLogs and initMsg then
+        if Config.InitLogs and initMsg then
+            print(`[INIT] {mod.Name} - {initMsg}`)
+        end
+    end
+    loadedModules += 1
 end 
 
-print("init success")
+print(`[INIT]:{loadedModules}/{#modules} modules loaded successfully.`)
 
 mainWindow:Show()

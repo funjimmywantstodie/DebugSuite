@@ -1,12 +1,28 @@
 from pathlib import Path
+import os
 import shutil
 import subprocess
 
 
-# optionaly, paste your executor workspace path here to copy each build there.
-WORKSPACE = r"C:\Users\funjimmy\AppData\Local\Volt\workspace"
-
 root = Path(__file__).resolve().parent.parent
+
+# Read the optional local workspace setting; shell variables take precedence.
+workspace_setting = ""
+env_file = root / ".env"
+if env_file.is_file():
+    for line in env_file.read_text(encoding="utf-8").splitlines():
+        key, separator, value = line.strip().partition("=")
+        if separator and key.strip() == "DEBUGSUITE_WORKSPACE":
+            workspace_setting = value.strip()
+            if (
+                len(workspace_setting) >= 2
+                and workspace_setting[0] in ("'", '"')
+                and workspace_setting[-1] == workspace_setting[0]
+            ):
+                workspace_setting = workspace_setting[1:-1]
+
+WORKSPACE = os.environ.get("DEBUGSUITE_WORKSPACE", workspace_setting)
+
 source = root / "src" / "main.lua"
 output = root / "dist" / "DebugSuite.lua"
 output.parent.mkdir(parents=True, exist_ok=True)

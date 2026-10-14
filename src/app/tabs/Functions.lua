@@ -1,4 +1,5 @@
 local m = {}
+m.Name = "Functions"
 
 local types = require("../../Types")
 function m.init(window: types.Window)

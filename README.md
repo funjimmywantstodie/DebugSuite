@@ -24,8 +24,9 @@ Building requires Python 3 and `darklua` (the version is pinned in
 [rokit.toml](rokit.toml)). Running requires a Roblox executor with the necessary
 APIs, including `getgenv`, `cloneref`, and access to `CoreGui`.
 
-1. In [tools/build.py](tools/build.py), set `WORKSPACE` to your executor's
-   workspace folder, or `r""` to skip copying the build.
+1. Copy [.env.example](.env.example) to `.env` in the repository root and set
+   `DEBUGSUITE_WORKSPACE` to your executor's workspace folder. Leave it empty
+   to skip copying. The local `.env` file is ignored by Git.
 2. Run `python3 tools/build.py` from the repository root.
 3. Execute [dist/DebugSuite.lua](dist/DebugSuite.lua), or save
    [tools/Bootstrap.lua](tools/Bootstrap.lua) in your executor to load the
@@ -33,6 +34,17 @@ APIs, including `getgenv`, `cloneref`, and access to `CoreGui`.
 
 On Windows, use `py -3` instead of `python3` if needed. Rebuild after editing
 source files.
+
+For example, your `.env` on macOS can contain:
+
+```dotenv
+DEBUGSUITE_WORKSPACE="/Users/max/Documents/Macsploit Workspace"
+```
+
+On Windows, use a path such as `DEBUGSUITE_WORKSPACE="C:\path\to\workspace"`.
+An existing `DEBUGSUITE_WORKSPACE` shell environment variable overrides `.env`.
+If you previously exported it in zsh, run `unset DEBUGSUITE_WORKSPACE` and remove
+that export from `~/.zshrc` to use `.env` instead.
 
 ## Source
 

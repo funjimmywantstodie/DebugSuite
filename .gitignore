@@ -3,5 +3,6 @@ __pycache__/
 *.py[cod]
 
 # Local development files
+/.env
 /tests/
 /dist/Test.lua

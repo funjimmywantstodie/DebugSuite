@@ -1,4 +1,5 @@
 local m = {}
+m.Name = "GC"
 
 local types = require("../../Types")
 function m.init(window: types.Window)

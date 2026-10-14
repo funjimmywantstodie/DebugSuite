@@ -4,7 +4,7 @@
     {
       "label": "Build DebugSuite",
       "type": "process",
-      "command": "python",
+      "command": "python3",
       "args": ["${workspaceFolder}/tools/build.py"],
       "options": {
         "cwd": "${workspaceFolder}"

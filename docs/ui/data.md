@@ -4,6 +4,9 @@
 
 [UI docs](README.md) · [Examples](examples/README.md)
 
+See [Choosing a data display](displaying-data.md) to pick a list, tree, viewer,
+console, or value control for your data.
+
 ## Lists and trees
 
 ### List

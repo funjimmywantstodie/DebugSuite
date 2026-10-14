@@ -6,6 +6,7 @@ Start with a runnable example, then look up options and methods as needed.
 
 | Reference | Covers |
 | --- | --- |
+| [Choosing a data display](displaying-data.md) | Every display/control, when to use it, and useful combinations. |
 | [Windows and tabs](windows.md) | Main UI, floating windows, sections, shortcuts. |
 | [Layouts](layouts.md) | Rows, panels, split panes, sizing. |
 | [Controls](controls.md) | Buttons, textboxes, toggles, dropdowns, menus. |

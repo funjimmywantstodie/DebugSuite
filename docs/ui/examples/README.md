@@ -4,6 +4,8 @@
 
 [UI reference](../README.md)
 
+See [Choosing a data display](../displaying-data.md) for when to use each component.
+
 Run one example at a time in a Roblox executor. Each creates its own main UI;
 rerunning replaces the previous UI and cleans up its events and windows.
 

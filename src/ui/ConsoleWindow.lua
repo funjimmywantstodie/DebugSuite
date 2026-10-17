@@ -7,6 +7,7 @@ function m.new(window)
         name = "ConsoleWindow",
         title = "Console",
         closeBehavior = "hide",
+        layout = "free",
         visible = false,
         size = UDim2.fromScale(.6, .5),
         position = UDim2.fromScale(.55, .55),

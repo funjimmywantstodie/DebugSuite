@@ -16,17 +16,21 @@
 | [Console](logging.md#console) | Keep a chronological stream of messages with levels: traces, progress, warnings. | `NewEntry(text, level)` or `Append(entries)`; set `maxEntries`. |
 | [Built-in console](logging.md#console) | Share one log across the app without placing a console in every tab. | `window:Log`; `OpenConsole` shows it. `captureLogs` optionally captures LogService. |
 | [Notification](logging.md#notification) | Briefly call attention to completion, failure, or another important event. | `window:Notify`; the full text also goes to the built-in console. |
-| [Raw TextLabel](lifecycle.md) | Show a small read-only status, count, or caption without an input field. | Parent a Roblox `TextLabel` to a container's `contentFrame`; update `.Text`. |
+| [Label](controls.md#labels) | Show a small read-only status, count, or caption without an input field. | `NewLabel({ text = value })`, then `SetText`; `GetText` returns the raw string. |
 
 Lists and trees render rows near the viewport. A text viewer shows one text block;
 a console keeps separate entries and drops the oldest at its limit. Notifications
 show at most three toasts and only the first line of each message.
 
+For a simple results list, use `NewList({ showHeader = false, columns = ... })`
+to hide the sorting headers and let rows use that space. See the
+[headerless list example](data.md#list). Keep `columns` to define the displayed values.
+
 ## Values and actions
 
 | Control | Use when | Read/update |
 | --- | --- | --- |
-| [Textbox](controls.md) | Enter or display one short string: search, a name, a single value. | `SetValue`/`GetValue`; `OnChanged` for live updates, `OnSubmitted` for Enter. `SetEnabled(false)` makes it read-only. |
+| [Textbox](controls.md) | Enter or display one short string: search, a name, a single value. | `SetValue`/`GetValue`; constructor callback on focus loss, `OnChanged` for live updates, `OnSubmitted` for Enter only. `SetEnabled(false)` makes it read-only. |
 | [Toggle](controls.md) | Represent an editable boolean: enabled, paused, an on/off setting. | `SetValue`/`GetValue`; `OnChanged` receives a boolean. |
 | [Dropdown](controls.md) | Choose one string from a known set: log level, mode, category. | `options`, `SetOptions`, `SetValue`/`GetValue`; `OnChanged` receives a string or `nil`. |
 | [Button](controls.md) | Trigger an action, such as opening details or refreshing data. Its caption can show a short count/status. | Click callback; `SetText` updates the caption. |

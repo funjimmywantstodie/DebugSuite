@@ -7,6 +7,7 @@ local lifecycle = require("./util/Lifecycle")
 local drag = require("./util/Drag")
 local ui = require("./util/UIConstructor")
 local container = require("./Container")
+local sectionLayout = require("./SectionLayout")
 
 function m:Focus()
     self.focusManager:Focus(self)
@@ -49,7 +50,7 @@ function m.new(screen, opts, focusManager, owner)
     root.Size = opts.size or UDim2.fromScale(.5, .5)
     root.AnchorPoint = Vector2.new(.5, .5)
     root.Position = opts.position or UDim2.fromScale(.5, .5)
-    root.BackgroundColor3 = opts.backgroundColor or colors.component
+    root.BackgroundColor3 = opts.backgroundColor or colors.tabContainer
     root.BorderSizePixel = 0
     root.Active = true
     root.Visible = opts.visible ~= false
@@ -114,14 +115,17 @@ function m.new(screen, opts, focusManager, owner)
         return focusManager:CanStartDrag(self, topbar, event)
     end)
 
-    local content = Instance.new("Frame")
+    local content = Instance.new("ScrollingFrame")
     content.Name = "Content"
     content.BackgroundTransparency = 1
+    content.BorderSizePixel = 0
+    content.ScrollBarThickness = 6
     content.Position = UDim2.fromOffset(0, 32)
     content.Size = UDim2.new(1, 0, 1, -32)
     content.ZIndex = 9
     content.Parent = root
-    self.contentFrame = content
+    self.container = content
+    sectionLayout.attach(self, content, opts.layout)
     container.attach(self)
 
     local resize = Instance.new("Frame")

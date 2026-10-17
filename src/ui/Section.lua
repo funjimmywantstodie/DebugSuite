@@ -10,17 +10,18 @@ local function updateHeight(self)
     self.frame.Size = UDim2.new(1, 0, 0, 40 + self.layout.AbsoluteContentSize.Y)
 end
 
-function m.new(tab: types.Tab, name: string, side: types.SectionSide, order: number): types.Section
+function m.new(owner, name: string, side: types.SectionSide, order: number): types.Section
     local frame = Instance.new("Frame")
     frame.Name = name
     frame.BackgroundColor3 = colors.section
     frame.Size = UDim2.new(1, 0, 0, 40)
     frame.LayoutOrder = order
-    frame.ZIndex = 40
-    frame.Parent = tab.columns[side]
-    local self = lifecycle.attach(setmetatable({}, m), frame, tab)
+    frame.ZIndex = owner.columns[side].ZIndex + 1
+    frame.Parent = owner.columns[side]
+    local self = lifecycle.attach(setmetatable({}, m), frame, owner)
     self.sectionFrame = frame
-    self.parentTab = tab
+    self.parentContainer = owner
+    self.parentTab = if owner.tabBtn then owner else nil
     local header = Instance.new("TextLabel")
     header.Name = "Header"
     header.Size = UDim2.new(1, 0, 0, 24)

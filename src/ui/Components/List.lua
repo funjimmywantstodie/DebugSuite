@@ -8,10 +8,6 @@ local scope = require("../util/Scope")
 
 local function render(self)
     if self.destroyed then return end
-    self.renderScope:Destroy()
-    self.renderScope = scope.new()
-    for _, frame in self.rows do frame:Destroy() end
-    table.clear(self.rows)
     local fixed, flexible = 0, 0
     for _, column in self.columns do
         if column.width then fixed += column.width else flexible += 1 end
@@ -34,34 +30,55 @@ local function render(self)
     local first = math.max(1, math.floor(self.viewport.CanvasPosition.Y / height) + 1)
     local count = math.ceil(self.viewport.AbsoluteSize.Y / height) + 2
     self.viewport.CanvasSize = UDim2.fromOffset(if self.width > available then self.width else 0, #self.filtered * height)
-    for index = first, math.min(#self.filtered, first + count) do
+    local last = math.min(#self.filtered, first + count)
+    for index, entry in self.rowEntries do
+        if index < first or index > last then
+            entry.scope:Destroy()
+            entry.frame:Destroy()
+            self.rowEntries[index] = nil
+        end
+    end
+    table.clear(self.rows)
+    for index = first, last do
         local record = self.filtered[index]
-        local row = Instance.new("Frame")
+        local entry = self.rowEntries[index]
+        if not entry then
+            local row = Instance.new("Frame")
+            row.BorderSizePixel = 0
+            row.ClipsDescendants = true
+            row.ZIndex = self.viewport.ZIndex + 1
+            entry = { frame = row, cells = {}, scope = scope.new() }
+            self.rowEntries[index] = entry
+            for _, column in self.columns do
+                local cell = ui.createButton(row, { text = "" })
+                cell.TextXAlignment = Enum.TextXAlignment.Left
+                cell.TextTruncate = Enum.TextTruncate.AtEnd
+                cell.BackgroundTransparency = 1
+                cell.BorderSizePixel = 0
+                entry.scope:Connect(cell.MouseButton1Click, function() self:Select(entry.record.id) end)
+                local padding = Instance.new("UIPadding")
+                padding.PaddingLeft = UDim.new(0, 8)
+                padding.PaddingRight = UDim.new(0, 8)
+                padding.Parent = cell
+                table.insert(entry.cells, cell)
+            end
+        end
+        entry.record = record
+        local row = entry.frame
         row.Size = UDim2.fromOffset(math.max(self.width, self.viewport.AbsoluteSize.X - 8), height)
         row.Position = UDim2.fromOffset(0, (index - 1) * height)
         row.BackgroundColor3 = if record.id == self.selectedId then colors.sectionHeader else colors.section
-        row.BorderSizePixel = 0
-        row.ClipsDescendants = true
-        row.ZIndex = self.viewport.ZIndex + 1
-        row.Parent = self.viewport
         table.insert(self.rows, row)
         local offset = 0
         for i, column in self.columns do
             local value = record.values[column.key]
-            local cell = ui.createButton(row, { text = if value == nil then "" else tostring(value) })
-            cell.TextXAlignment = Enum.TextXAlignment.Left
-            cell.TextTruncate = Enum.TextTruncate.AtEnd
-            cell.BackgroundTransparency = 1
-            cell.BorderSizePixel = 0
+            local cell = entry.cells[i]
+            cell.Text = if value == nil then "" else tostring(value)
             cell.Position = UDim2.fromOffset(offset, 0)
             cell.Size = UDim2.new(0, self.widths[i], 1, 0)
-            self.renderScope:Connect(cell.MouseButton1Click, function() self:Select(record.id) end)
-            local padding = Instance.new("UIPadding")
-            padding.PaddingLeft = UDim.new(0, 8)
-            padding.PaddingRight = UDim.new(0, 8)
-            padding.Parent = cell
             offset += self.widths[i]
         end
+        if row.Parent ~= self.viewport then row.Parent = self.viewport end
     end
 end
 
@@ -78,25 +95,32 @@ function m.new(owner, opts)
     self.records = {}
     self.filtered = {}
     self.rows = {}
+    self.rowEntries = {}
     self.headers = {}
     self.columns = opts.columns or { { key = "text", text = "Text" } }
     self.rowHeight = math.max(16, opts.rowHeight or 26)
     self.maxRecords = math.max(1, opts.maxRecords or 5000)
     self.filter = ""
-    self.renderScope = scope.new()
     self.selected = lifecycle.event(self)
-    self.scope:Add(function() self.renderScope:Destroy() end)
+    self.scope:Add(function()
+        for _, entry in self.rowEntries do entry.scope:Destroy() end
+        table.clear(self.rowEntries)
+        table.clear(self.rows)
+    end)
     local viewport = Instance.new("ScrollingFrame")
+    local showHeader = opts.showHeader ~= false
+    local viewportTop = if showHeader then 42 else 8
     viewport.BackgroundTransparency = 1
     viewport.BorderSizePixel = 0
-    viewport.Position = UDim2.fromOffset(8, 42)
-    viewport.Size = UDim2.new(1, -16, 1, -50)
+    viewport.Position = UDim2.fromOffset(8, viewportTop)
+    viewport.Size = UDim2.new(1, -16, 1, -(viewportTop + 8))
     viewport.CanvasSize = UDim2.new()
     viewport.ScrollBarThickness = 6
     viewport.ZIndex = frame.ZIndex + 1
     viewport.Parent = frame
     self.viewport = viewport
     local headerFrame = Instance.new("Frame")
+    headerFrame.Visible = showHeader
     headerFrame.BackgroundTransparency = 1
     headerFrame.ClipsDescendants = true
     headerFrame.Position = UDim2.fromOffset(8, 8)
@@ -104,7 +128,7 @@ function m.new(owner, opts)
     headerFrame.ZIndex = frame.ZIndex + 1
     headerFrame.Parent = frame
     local offset = 0
-    for _, column in self.columns do
+    for _, column in (if showHeader then self.columns else {}) do
         local header = ui.createButton(headerFrame, { text = column.text or column.key })
         table.insert(self.headers, header)
         header.Position = UDim2.fromOffset(offset, 0)

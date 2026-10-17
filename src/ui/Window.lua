@@ -93,6 +93,7 @@ function m.new(opts: types.WindowOpts?): types.Window
     minimum = Vector2.new(math.max(400, minimum.X), math.max(260, minimum.Y))
     self.shell = WindowFrame.new(sgui, {
         size = opts and opts.size, minSize = minimum,
+        layout = "free",
         onClose = function() self:Destroy() end,
     }, self.focusManager)
     local root = self.shell.frame

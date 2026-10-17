@@ -1,6 +1,7 @@
 local m = {}
 local button = require("./Components/Button")
 local textbox = require("./Components/Textbox")
+local label = require("./Components/Label")
 local row = require("./Components/Row")
 local console = require("./Components/Console")
 local panel = require("./Components/Panel")
@@ -26,6 +27,10 @@ end
 
 function m:NewTextbox(opts, callback)
     return add(self, textbox.new(self, opts, callback))
+end
+
+function m:NewLabel(opts)
+    return add(self, label.new(self, opts))
 end
 
 function m:NewRow(opts)

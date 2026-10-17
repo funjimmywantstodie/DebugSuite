@@ -9,8 +9,9 @@ raw values; displayed labels and highlighting do not change application data.
 
 | Constructor → Return | Methods and callbacks |
 | --- | --- |
+| `NewLabel(opts) → Label` | Read-only text; `GetText()`, `SetText(text)`. |
 | `NewButton(opts, callback?) → Button` | Callback on click; `SetText(text)`, `SetEnabled(bool)`. |
-| `NewTextbox(opts, callback?) → Textbox` | Callback on Enter; `GetValue()`, `SetValue(text)`, `SetPlaceholder(text)`, `SetEnabled(bool)`, `Focus()`, `OnChanged(fn)`, `OnSubmitted(fn)`. |
+| `NewTextbox(opts, callback?) → Textbox` | Callback on focus loss (Enter or clicking away); `OnSubmitted(fn)` is Enter-only. `GetValue()`, `SetValue(text)`, `SetPlaceholder(text)`, `SetEnabled(bool)`, `Focus()`, `OnChanged(fn)`. |
 | `NewToggle(opts, callback?) → Toggle` | Callback and `OnChanged(fn)` receive a boolean; `GetValue()`, `SetValue(bool)`, `SetText(text)`, `SetEnabled(bool)`. |
 | `NewDropdown(opts, callback?) → Dropdown` | Callback and `OnChanged(fn)` receive a string or `nil`; `GetValue()`, `SetValue(value)`, `SetOptions(options)`, `SetOpen(bool)`, `SetEnabled(bool)`. |
 | `NewMenu(opts) → Menu` | `SetText(text)`, `SetEnabled(bool)`, `SetOpen(bool)`; item callbacks run on selection. |
@@ -23,7 +24,51 @@ text, toggles pass a boolean, and dropdowns pass a string or `nil`.
 | --- | --- | --- |
 | `text` | `string` | Required on every control; caption, or textbox placeholder. |
 
-Toggle options:
+## Labels
+
+Use `NewLabel` on a section, panel, tab, split-pane half, or floating window
+for a caption or short status. Labels are transparent, centered, plain text
+with the same default font and text size as buttons, textboxes, and section headers,
+and follow creation order alongside other components. Rows currently support
+buttons and textboxes only.
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `text` | `string` | Required label contents. |
+| `height` | `number?` | Height in pixels; default `20`. Increase for wrapped text. |
+
+```lua
+section:NewTextbox({ text = "Search..." }, onSearch)
+local label = section:NewLabel({ text = "Constants (comma-separated)" })
+section:NewTextbox({ text = "e.g. x, y, z" }, onConstants)
+label:SetText("Constants (optional, comma-separated)")
+```
+
+`GetText()` returns the exact string. Labels also support `SetVisible(bool)`
+and `Destroy()`; their parent cleans them up automatically.
+
+## Textbox callbacks
+
+The constructor callback receives the current raw text whenever the textbox
+loses focus, including Enter or clicking away. Use it to save an edited value.
+`OnChanged` fires when the text changes, including through `SetValue`.
+`OnSubmitted` fires only when Enter ends editing; use it for an explicit action.
+`SetValue` does not invoke the constructor callback or `OnSubmitted`.
+
+```lua
+local query = ""
+local input = section:NewTextbox({ text = "Search..." }, function(value)
+    query = value -- Save on Enter or clicking away.
+end)
+input:OnSubmitted(function(value)
+    search(value) -- Search only on Enter.
+end)
+section:NewButton({ text = "Search" }, function()
+    search(input:GetValue())
+end)
+```
+
+## Toggle options
 
 | Option | Type | Description |
 | --- | --- | --- |

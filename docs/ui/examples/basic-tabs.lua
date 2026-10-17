@@ -18,7 +18,9 @@ local preview = home:NewSection("Preview", "right")
 local viewer = preview:NewTextViewer({ text = "Hello!", height = 100 })
 local options = settings:NewSection("Greeting", "full")
 local input = options:NewTextbox({ text = "Enter a greeting" }, function(value)
-    viewer:SetText(value)
+    viewer:SetText(value) -- Save the greeting on Enter or clicking away.
+end)
+input:OnSubmitted(function()
     window:SelectTab(home)
 end)
 input:SetValue("Hello!") -- text sets a placeholder; SetValue sets the contents.

@@ -4,6 +4,15 @@ local lifecycle = require("./Lifecycle")
 local buttonMethods = {}
 local textboxMethods = {}
 
+local function runCallback(gui, eventName, callback, ...)
+    local ok, err = xpcall(callback, function(message)
+        return debug.traceback(tostring(message), 2)
+    end, ...)
+    if not ok then
+        warn(`[UI] {gui.ClassName} "{gui.Name}" {eventName} callback failed:\n{err}`)
+    end
+end
+
 function buttonMethods:SetText(value: string)
     self.button.Text = value
 end
@@ -36,18 +45,22 @@ function textboxMethods:Focus()
 end
 
 function textboxMethods:OnChanged(callback)
-    return self.scope:Connect(self.changed.Event, callback)
+    return self.scope:Connect(self.changed.Event, function(value)
+        runCallback(self.button, "OnChanged", callback, value)
+    end)
 end
 
 function textboxMethods:OnSubmitted(callback)
-    return self.scope:Connect(self.submitted.Event, callback)
+    return self.scope:Connect(self.submitted.Event, function(value)
+        runCallback(self.button, "OnSubmitted", callback, value)
+    end)
 end
 
 function m.button(owner, opts, callback, parent)
     local gui = ui.createButton(parent or owner.contentFrame, opts)
     local self = lifecycle.attach({ button = gui, callback = callback, enabled = true }, gui, owner)
     self.scope:Connect(gui.MouseButton1Click, function()
-        if self.enabled and self.callback then self.callback() end
+        if self.enabled and self.callback then runCallback(gui, "click", self.callback) end
     end)
     for name, method in buttonMethods do self[name] = method end
 
@@ -64,8 +77,8 @@ function m.textbox(owner, opts, callback, parent)
         self.changed:Fire(gui.Text)
     end)
     self.scope:Connect(gui.FocusLost, function(enterPressed)
+        if self.callback then runCallback(gui, "submit", self.callback, gui.Text) end
         if enterPressed then
-            if self.callback then self.callback(gui.Text) end
             self.submitted:Fire(gui.Text)
         end
     end)

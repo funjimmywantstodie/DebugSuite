@@ -4,6 +4,7 @@ local colors = require("../Colors")
 local types = require("../../Types")
 
 function m.createButton(parent: GuiObject, opts: types.ComponentOpts, zIndex: number?): TextButton
+    assert(type(opts) == "table" and type(opts.text) == "string", 'NewButton expects { text = "..." }')
     local button = Instance.new("TextButton")
     button.Name = opts.text
     button.BackgroundColor3 = colors.component
@@ -16,6 +17,7 @@ function m.createButton(parent: GuiObject, opts: types.ComponentOpts, zIndex: nu
 end
 
 function m.createTextbox(parent: GuiObject, opts: types.ComponentOpts, zIndex: number?): TextBox
+    assert(type(opts) == "table" and type(opts.text) == "string", 'NewTextbox expects { text = "..." }')
     local textbox = Instance.new("TextBox")
     textbox.Name = opts.text
     textbox.BackgroundColor3 = colors.component

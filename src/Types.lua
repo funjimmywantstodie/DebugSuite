@@ -21,6 +21,7 @@ export type Component = {
 }
 
 export type ComponentOpts = { text: string }
+export type LabelOpts = { text: string, height: number? }
 export type RowOpts = { text: string?, gap: number? }
 export type RowComponentOpts = { text: string, width: number?, fill: boolean? }
 export type PanelOpts = {
@@ -46,7 +47,7 @@ export type Record = { id: string | number, values: {[string]: any}, data: any? 
 export type Column = { key: string, text: string?, width: number? }
 export type ListOpts = {
     text: string?, size: UDim2?, height: number?, columns: {Column}?,
-    rowHeight: number?, maxRecords: number?,
+    rowHeight: number?, maxRecords: number?, showHeader: boolean?,
 }
 export type TreeNode = {
     id: string | number, text: string, data: any?, children: {TreeNode}?,
@@ -66,6 +67,7 @@ export type Container = Component & {
     contentFrame: GuiObject,
     NewButton: (self: any, opts: ComponentOpts, callback: (() -> any)?) -> Button,
     NewTextbox: (self: any, opts: ComponentOpts, callback: ((string) -> any)?) -> Textbox,
+    NewLabel: (self: any, opts: LabelOpts) -> Label,
     NewRow: (self: any, opts: RowOpts?) -> Row,
     NewConsole: (self: any, opts: ConsoleOpts?) -> Console,
     NewPanel: (self: any, opts: PanelOpts?) -> Container,
@@ -78,6 +80,11 @@ export type Container = Component & {
     NewMenu: (self: any, opts: MenuOpts) -> Menu,
 }
 
+export type Label = Component & {
+    frame: TextLabel,
+    GetText: (self: Label) -> string,
+    SetText: (self: Label, value: string) -> (),
+}
 export type Button = Component & {
     button: TextButton,
     callback: (() -> any)?,
@@ -151,11 +158,14 @@ export type Dropdown = Component & {
     OnChanged: (self: Dropdown, callback: (string?) -> ()) -> RBXScriptConnection,
 }
 export type Menu = Button & { SetOpen: (self: Menu, value: boolean) -> () }
-export type Section = Container & { parentTab: Tab, sectionFrame: Frame }
-export type Tab = Container & {
-    parentWindow: Window, tabBtn: TextButton, sections: {Component}, container: ScrollingFrame,
+export type Section = Container & { parentContainer: SectionHost, parentTab: Tab?, sectionFrame: Frame }
+export type SectionHost = Container & {
+    sections: {Component}, container: ScrollingFrame,
     columns: {left: Frame, right: Frame, top: Frame, bottom: Frame, full: Frame},
-    NewSection: (self: Tab, name: string, side: SectionSide?) -> Section,
+    NewSection: (self: any, name: string, side: SectionSide?) -> Section,
+}
+export type Tab = SectionHost & {
+    parentWindow: Window, tabBtn: TextButton,
     ShowCurrentTab: (self: Tab) -> (), HideCurrentTab: (self: Tab) -> (),
 }
 export type TabOpts = { layout: ("sections" | "free")? }
@@ -163,8 +173,9 @@ export type WindowOpts = { size: UDim2?, minSize: Vector2?, captureLogs: boolean
 export type FloatingWindowOpts = {
     name: string?, title: string?, size: UDim2?, position: UDim2?, minSize: Vector2?,
     visible: boolean?, closeBehavior: ("hide" | "destroy")?, backgroundColor: Color3?,
+    layout: ("sections" | "free")?,
 }
-export type FloatingWindow = Container & {
+export type FloatingWindow = SectionHost & {
     guis: { ScreenGui: ScreenGui, Root: Frame, Topbar: Frame },
     Show: (self: FloatingWindow) -> (), Hide: (self: FloatingWindow) -> (),
     Toggle: (self: FloatingWindow) -> (), Focus: (self: FloatingWindow) -> (),

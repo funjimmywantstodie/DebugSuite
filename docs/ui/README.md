@@ -9,7 +9,7 @@ Start with a runnable example, then look up options and methods as needed.
 | [Choosing a data display](displaying-data.md) | Every display/control, when to use it, and useful combinations. |
 | [Windows and tabs](windows.md) | Main UI, floating windows, sections, shortcuts. |
 | [Layouts](layouts.md) | Rows, panels, split panes, sizing. |
-| [Controls](controls.md) | Buttons, textboxes, toggles, dropdowns, menus. |
+| [Controls](controls.md) | Labels, buttons, textboxes, toggles, dropdowns, menus. |
 | [Lists, trees, and text](data.md) | Records, selection, lazy children, syntax highlighting. |
 | [Consoles and notifications](logging.md) | Logging, pause, levels, toast messages. |
 | [Cleanup and customization](lifecycle.md) | Ownership, events, raw instances, colors. |
@@ -40,7 +40,11 @@ window:Show()
 ```
 
 `Window.new` replaces the previous main UI. Use `window:NewWindow` for extra
-windows belonging to that UI. Use sections or panels to arrange multiple controls.
+windows belonging to that UI. Tabs and floating windows share `NewSection` and
+the component methods, so the same content builder works in either. Both default
+to section layouts; use `layout = "free"` for manual placement. See the
+[shared content API](windows.md#shared-content-api) and
+[runnable example](examples/shared-content.lua).
 Every example runs independently; rerunning cleans up the previous UI.
 
 See [Types.lua](../../src/Types.lua) for Luau types and

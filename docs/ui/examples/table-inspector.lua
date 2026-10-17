@@ -14,6 +14,7 @@ sample.self = sample -- Demonstrate cycle handling.
 -- Extra windows use the existing main window; Window.new would replace it.
 local inspector = window:NewWindow({
     title = "Table inspector", visible = false, closeBehavior = "hide",
+    layout = "free",
     size = UDim2.fromOffset(640, 400),
 })
 local split = inspector:NewSplitPane({ size = UDim2.fromScale(1, 1), ratio = 0.55 })

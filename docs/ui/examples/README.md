@@ -11,7 +11,8 @@ rerunning replaces the previous UI and cleans up its events and windows.
 
 | Example | What to try |
 | --- | --- |
-| [Basic tabs](basic-tabs.lua) | Create two tabs, switch with buttons, submit a textbox with Enter, update a viewer. |
+| [Basic tabs](basic-tabs.lua) | Edit a greeting; Enter or clicking away updates the viewer. Enter also returns to Home; buttons switch tabs. |
+| [Shared content](shared-content.lua) | Build identical sections in a tab and a floating window with one content builder; hide and reopen the window. |
 | [Table inspector](table-inspector.lua) | Click **View table** to open, or **Toggle inspector** to show/hide; expand nested tables, select raw values, refresh, close and reopen. |
 | [Workbench](workbench.lua) | Resize a split pane, filter/sort/select a list, edit highlighted text, use toggles, dropdowns, menus, logs, and notifications. |
 
@@ -38,8 +39,8 @@ When adding an inspector to your app, reuse its existing `window` and call
 
 | Task | Use |
 | --- | --- |
-| Arrange controls | A section, or a panel inside a floating window/split-pane half. |
-| Fill available space | `size = UDim2.fromScale(1, 1)` on the outer component. |
+| Arrange controls | `NewSection(name, side?)` on a tab or floating window; panels inside free layouts and split-pane halves. |
+| Fill available space | Use `layout = "free"` on a tab/window, then `size = UDim2.fromScale(1, 1)` on the outer component. |
 | Open a reusable tool window | Create it with `visible = false`, `closeBehavior = "hide"`; call `Show` from a button. |
 | Show flat records | `NewList`, `SetRecords`, and `OnSelected`. |
 | Show nested tables | `NewTree` and lazy `loadChildren`; preserve values in `data`. |

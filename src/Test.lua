@@ -61,6 +61,15 @@ end)
 window:SelectTab(testTab)
 window:Show()
 
+-- Share section-based content between a tab and an owned floating window.
+local inspector = window:NewWindow({
+    title = "Section inspector", visible = false, closeBehavior = "hide",
+    size = UDim2.fromOffset(600, 400),
+})
+local inspectorSection = inspector:NewSection("Details", "full")
+inspectorSection:NewLabel({ text = "Floating windows use the same sections as tabs." })
+topSection:NewButton({ text = "Open inspector" }, function() inspector:Show() end)
+
 local searchRow = topSection:NewRow({ text = "Search", gap = 6 })
 local function search(value: string)
     print("search: " .. value)

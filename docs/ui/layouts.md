@@ -6,6 +6,9 @@
 
 Tabs, sections, panels, floating windows, and both halves of a split pane expose
 all `New*` component methods below. Rows expose only `NewButton` and `NewTextbox`.
+Tabs and floating windows also share [`NewSection(name, side?)`](windows.md#shared-content-api)
+and the same `layout = "sections" | "free"` option. Sections belong to these hosts;
+panels and split-pane halves expose the component methods, without section columns.
 
 ### Row
 
@@ -56,8 +59,9 @@ Syntax: `container:NewSplitPane(opts: table?) → SplitPane`
 
 Returns `.first` and `.second` containers; `SetRatio(number)` adjusts the divider.
 
-Sections and panels arrange children. Floating windows and split-pane halves
-need a panel or explicit positioning for multiple controls. Use
+Sections and panels arrange children. Use sections in a tab or floating window
+with the default layout. Use a panel or explicit positioning in a `"free"` host
+or a split-pane half. Use
 `panel.contentFrame` for raw Roblox instances or manual layouts.
 Panel `auto = true` also sets full width. Layouts control child positions;
 use `layout = "none"` for manual placement.

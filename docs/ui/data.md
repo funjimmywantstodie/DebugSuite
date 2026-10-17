@@ -114,7 +114,8 @@ Methods: `SetNodes(nodes)`, `Expand(id, bool)`, `Select(id)`, `OnSelected(fn)`,
 and `Clear()`. Lazy children load once per node until `SetNodes` resets the
 tree. Selection and expansion target visible nodes; clicking a branch toggles
 expansion and selects it. Resetting a selected tree emits `nil`. Lists and trees
-render only rows near the viewport. Nodes deeper than `maxDepth` are hidden.
+render only rows near the viewport. Tree rows that remain visible are retained
+while scrolling, selecting, or expanding nodes. Nodes deeper than `maxDepth` are hidden.
 Lazy-loader failures warn and allow retry. Unknown or collapsed-child IDs do nothing.
 
 ## Text and syntax highlighting

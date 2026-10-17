@@ -44,55 +44,72 @@ end
 
 local function render(self)
     if self.destroyed then return end
-    self.renderScope:Destroy()
-    self.renderScope = scope.new()
-    for _, row in self.rows do row:Destroy() end
-    table.clear(self.rows)
     flatten(self)
     self.emptyLabel.Visible = #self.visibleNodes == 0
     self.frame.CanvasSize = UDim2.fromOffset(0, #self.visibleNodes * 34 + 16)
     local first = math.max(1, math.floor(self.frame.CanvasPosition.Y / 34) + 1)
     local count = math.ceil(self.frame.AbsoluteSize.Y / 34) + 2
-    for i = first, math.min(#self.visibleNodes, first + count) do
+    local last = math.min(#self.visibleNodes, first + count)
+    local visible = {}
+    for i = first, last do visible[self.visibleNodes[i].node.id] = true end
+    -- Keep rows that remain visible, including when expansion moves their index.
+    for id, rowEntry in self.rowEntries do
+        if not visible[id] then
+            rowEntry.scope:Destroy()
+            rowEntry.frame:Destroy()
+            self.rowEntries[id] = nil
+        end
+    end
+    table.clear(self.rows)
+    for i = first, last do
         local entry = self.visibleNodes[i]
         local node = entry.node
         local canExpand = node.loadChildren ~= nil or (node.children ~= nil and #node.children > 0)
         local indent = entry.depth * 16
-        local row = Instance.new("Frame")
-        row.Name = "Node"
-        row.BackgroundTransparency = 1
-        row.BorderSizePixel = 0
-        row.Position = UDim2.fromOffset(8 + indent, 8 + (i - 1) * 34)
-        row.Size = UDim2.new(1, -24 - indent, 0, 28)
-        row.ZIndex = self.frame.ZIndex + 1
-        row.Parent = self.frame
-        local button = ui.createButton(row, { text = node.text })
-        button.TextXAlignment = Enum.TextXAlignment.Left
-        button.TextTruncate = Enum.TextTruncate.AtEnd
-        button.BackgroundTransparency = if canExpand or node.id == self.selectedId then 0 else 1
-        button.BorderSizePixel = if canExpand then 1 else 0
-        local padding = Instance.new("UIPadding")
-        padding.PaddingLeft = UDim.new(0, 8)
-        padding.PaddingRight = UDim.new(0, if canExpand then 88 else 8)
-        padding.Parent = button
-        if canExpand then
+        local rowEntry = self.rowEntries[node.id]
+        if not rowEntry then
+            local row = Instance.new("Frame")
+            row.Name = "Node"
+            row.BackgroundTransparency = 1
+            row.BorderSizePixel = 0
+            row.ZIndex = self.frame.ZIndex + 1
+            local button = ui.createButton(row, { text = "" })
+            button.TextXAlignment = Enum.TextXAlignment.Left
+            button.TextTruncate = Enum.TextTruncate.AtEnd
+            local padding = Instance.new("UIPadding")
+            padding.PaddingLeft = UDim.new(0, 8)
+            padding.Parent = button
             local state = Instance.new("TextLabel")
             state.Name = "State"
             state.BackgroundTransparency = 1
             state.Size = UDim2.fromOffset(80, 28)
             state.Position = UDim2.new(1, -84, 0, 0)
-            state.Text = if self.expanded[node.id] then "Collapse ^" else "Expand v"
             state.TextColor3 = colors.text
             state.Font = button.Font
             state.TextSize = button.TextSize
             state.ZIndex = button.ZIndex + 1
             state.Parent = row
+            rowEntry = { frame = row, button = button, padding = padding, state = state, scope = scope.new() }
+            self.rowEntries[node.id] = rowEntry
+            rowEntry.scope:Connect(button.MouseButton1Click, function()
+                local current = rowEntry.node
+                if rowEntry.canExpand then self:Expand(current.id, not self.expanded[current.id]) end
+                self:Select(current.id)
+            end)
         end
+        rowEntry.node = node
+        rowEntry.canExpand = canExpand
+        local row, button = rowEntry.frame, rowEntry.button
+        row.Position = UDim2.fromOffset(8 + indent, 8 + (i - 1) * 34)
+        row.Size = UDim2.new(1, -24 - indent, 0, 28)
+        button.Text = node.text
+        button.BackgroundTransparency = if canExpand or node.id == self.selectedId then 0 else 1
+        button.BorderSizePixel = if canExpand then 1 else 0
+        rowEntry.padding.PaddingRight = UDim.new(0, if canExpand then 88 else 8)
+        rowEntry.state.Visible = canExpand
+        rowEntry.state.Text = if self.expanded[node.id] then "Collapse ^" else "Expand v"
         table.insert(self.rows, row)
-        self.renderScope:Connect(button.MouseButton1Click, function()
-            if canExpand then self:Expand(node.id, not self.expanded[node.id]) end
-            self:Select(node.id)
-        end)
+        if row.Parent ~= self.frame then row.Parent = self.frame end
     end
 end
 
@@ -112,6 +129,8 @@ function m.new(owner, opts)
     self.expanded = {}
     self.loaded = {}
     self.rows = {}
+    self.rowEntries = {}
+    self.visibleNodes = {}
     self.maxDepth = opts.maxDepth or 32
     local empty = Instance.new("TextLabel")
     empty.Name = "Empty"
@@ -126,9 +145,13 @@ function m.new(owner, opts)
     empty.ZIndex = frame.ZIndex + 1
     empty.Parent = frame
     self.emptyLabel = empty
-    self.renderScope = scope.new()
     self.selected = lifecycle.event(self)
-    self.scope:Add(function() self.renderScope:Destroy() end)
+    self.scope:Add(function()
+        for _, entry in self.rowEntries do entry.scope:Destroy() end
+        table.clear(self.rowEntries)
+        table.clear(self.rows)
+        table.clear(self.visibleNodes)
+    end)
     self.scope:Connect(frame:GetPropertyChangedSignal("CanvasPosition"), function() render(self) end)
     self.scope:Connect(frame:GetPropertyChangedSignal("AbsoluteSize"), function() render(self) end)
     return self

@@ -7,6 +7,9 @@ local tbl = {}
 local function luaClosure()
     return "fail", upvalue
 end
+local function proto()
+    local function inner() return "yes" end
+end
 --only assign if exec supports newcclosure
 local cClosure: () -> string
 upvalue = "fail"
@@ -29,6 +32,7 @@ local debugGlobals = {
     "getconstants",
     "getupvalue",
     "getupvalues",
+    "getprotos",
 }
 
 function m.init()
@@ -131,6 +135,16 @@ function m.init()
 
     if not iscclosure(cClosure) then
         return false, "Failed to identify c closure"
+    end
+
+    --protos
+    local protos = debug.getprotos(proto)
+    if not protos or #protos ~= 1 then
+        return false, "Expected exactly 1 proto"
+    end
+
+    if debug.getconstant(protos[1], 1) ~= "yes" then
+        return false, "Proto did not contain expected constant"
     end
 
     local tests = #execGlobals + #debugGlobals

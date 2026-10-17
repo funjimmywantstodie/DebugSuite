@@ -1555,55 +1555,72 @@ end
 
 local function render(self)
     if self.destroyed then return end
-    self.renderScope:Destroy()
-    self.renderScope = scope.new()
-    for _, row in self.rows do row:Destroy() end
-    table.clear(self.rows)
     flatten(self)
     self.emptyLabel.Visible = #self.visibleNodes == 0
     self.frame.CanvasSize = UDim2.fromOffset(0, #self.visibleNodes * 34 + 16)
     local first = math.max(1, math.floor(self.frame.CanvasPosition.Y / 34) + 1)
     local count = math.ceil(self.frame.AbsoluteSize.Y / 34) + 2
-    for i = first, math.min(#self.visibleNodes, first + count) do
+    local last = math.min(#self.visibleNodes, first + count)
+    local visible = {}
+    for i = first, last do visible[self.visibleNodes[i].node.id] = true end
+    -- Keep rows that remain visible, including when expansion moves their index.
+    for id, rowEntry in self.rowEntries do
+        if not visible[id] then
+            rowEntry.scope:Destroy()
+            rowEntry.frame:Destroy()
+            self.rowEntries[id] = nil
+        end
+    end
+    table.clear(self.rows)
+    for i = first, last do
         local entry = self.visibleNodes[i]
         local node = entry.node
         local canExpand = node.loadChildren ~= nil or (node.children ~= nil and #node.children > 0)
         local indent = entry.depth * 16
-        local row = Instance.new("Frame")
-        row.Name = "Node"
-        row.BackgroundTransparency = 1
-        row.BorderSizePixel = 0
-        row.Position = UDim2.fromOffset(8 + indent, 8 + (i - 1) * 34)
-        row.Size = UDim2.new(1, -24 - indent, 0, 28)
-        row.ZIndex = self.frame.ZIndex + 1
-        row.Parent = self.frame
-        local button = ui.createButton(row, { text = node.text })
-        button.TextXAlignment = Enum.TextXAlignment.Left
-        button.TextTruncate = Enum.TextTruncate.AtEnd
-        button.BackgroundTransparency = if canExpand or node.id == self.selectedId then 0 else 1
-        button.BorderSizePixel = if canExpand then 1 else 0
-        local padding = Instance.new("UIPadding")
-        padding.PaddingLeft = UDim.new(0, 8)
-        padding.PaddingRight = UDim.new(0, if canExpand then 88 else 8)
-        padding.Parent = button
-        if canExpand then
+        local rowEntry = self.rowEntries[node.id]
+        if not rowEntry then
+            local row = Instance.new("Frame")
+            row.Name = "Node"
+            row.BackgroundTransparency = 1
+            row.BorderSizePixel = 0
+            row.ZIndex = self.frame.ZIndex + 1
+            local button = ui.createButton(row, { text = "" })
+            button.TextXAlignment = Enum.TextXAlignment.Left
+            button.TextTruncate = Enum.TextTruncate.AtEnd
+            local padding = Instance.new("UIPadding")
+            padding.PaddingLeft = UDim.new(0, 8)
+            padding.Parent = button
             local state = Instance.new("TextLabel")
             state.Name = "State"
             state.BackgroundTransparency = 1
             state.Size = UDim2.fromOffset(80, 28)
             state.Position = UDim2.new(1, -84, 0, 0)
-            state.Text = if self.expanded[node.id] then "Collapse ^" else "Expand v"
             state.TextColor3 = colors.text
             state.Font = button.Font
             state.TextSize = button.TextSize
             state.ZIndex = button.ZIndex + 1
             state.Parent = row
+            rowEntry = { frame = row, button = button, padding = padding, state = state, scope = scope.new() }
+            self.rowEntries[node.id] = rowEntry
+            rowEntry.scope:Connect(button.MouseButton1Click, function()
+                local current = rowEntry.node
+                if rowEntry.canExpand then self:Expand(current.id, not self.expanded[current.id]) end
+                self:Select(current.id)
+            end)
         end
+        rowEntry.node = node
+        rowEntry.canExpand = canExpand
+        local row, button = rowEntry.frame, rowEntry.button
+        row.Position = UDim2.fromOffset(8 + indent, 8 + (i - 1) * 34)
+        row.Size = UDim2.new(1, -24 - indent, 0, 28)
+        button.Text = node.text
+        button.BackgroundTransparency = if canExpand or node.id == self.selectedId then 0 else 1
+        button.BorderSizePixel = if canExpand then 1 else 0
+        rowEntry.padding.PaddingRight = UDim.new(0, if canExpand then 88 else 8)
+        rowEntry.state.Visible = canExpand
+        rowEntry.state.Text = if self.expanded[node.id] then "Collapse ^" else "Expand v"
         table.insert(self.rows, row)
-        self.renderScope:Connect(button.MouseButton1Click, function()
-            if canExpand then self:Expand(node.id, not self.expanded[node.id]) end
-            self:Select(node.id)
-        end)
+        if row.Parent ~= self.frame then row.Parent = self.frame end
     end
 end
 
@@ -1623,6 +1640,8 @@ function m.new(owner, opts)
     self.expanded = {}
     self.loaded = {}
     self.rows = {}
+    self.rowEntries = {}
+    self.visibleNodes = {}
     self.maxDepth = opts.maxDepth or 32
     local empty = Instance.new("TextLabel")
     empty.Name = "Empty"
@@ -1637,9 +1656,13 @@ function m.new(owner, opts)
     empty.ZIndex = frame.ZIndex + 1
     empty.Parent = frame
     self.emptyLabel = empty
-    self.renderScope = scope.new()
     self.selected = lifecycle.event(self)
-    self.scope:Add(function() self.renderScope:Destroy() end)
+    self.scope:Add(function()
+        for _, entry in self.rowEntries do entry.scope:Destroy() end
+        table.clear(self.rowEntries)
+        table.clear(self.rows)
+        table.clear(self.visibleNodes)
+    end)
     self.scope:Connect(frame:GetPropertyChangedSignal("CanvasPosition"), function() render(self) end)
     self.scope:Connect(frame:GetPropertyChangedSignal("AbsoluteSize"), function() render(self) end)
     return self
@@ -3016,28 +3039,576 @@ end function __DARKLUA_BUNDLE_MODULES.E():typeof(__modImpl())local v=__DARKLUA_B
 return {
     InitTimes = true,--whether to show init times for each module
     InitLogs = true --weather to show init logs for each module
-    
-}end function __DARKLUA_BUNDLE_MODULES.F():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.F if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.F=v end return v.c end end do local function __modImpl()
+}end function __DARKLUA_BUNDLE_MODULES.F():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.F if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.F=v end return v.c end end do local function __modImpl()--ai math stuff
+
+local m = {}
+m.Name = "ResizeSections"
+
+local drag = __DARKLUA_BUNDLE_MODULES.n()
+
+function m.init(window, header, columns)
+    -- Use the starting heights to keep the same proportions when resizing
+    local weights = {}
+    for i, column in columns do
+        weights[i] = {}
+        for j, view in column do
+            weights[i][j] = view.frame.Size.Y.Offset + 40
+        end
+    end
+
+    local function resize()
+        -- Sections have a 24px header and 8px padding on each edge
+        -- Leave room for the host's 5px padding and gaps
+        local height = window.container.AbsoluteSize.Y / drag.scale(window.container)
+        local available = height - header.frame.Size.Y.Offset - 15
+        for i, column in columns do
+            local total = 0
+            for _, weight in weights[i] do
+                total += weight
+            end
+            local remaining = math.max(0, available - (#column - 1) * 5)
+            local used = 0
+            for j, view in column do
+                local share
+                if j == #column then
+                    share = remaining - used
+                else
+                    share = math.floor(remaining * weights[i][j] / total)
+                end
+                used += share
+                local size = view.frame.Size
+                view.frame.Size = UDim2.new(size.X.Scale, size.X.Offset, 0, math.max(34, share - 40))
+            end
+        end
+    end
+
+    window.scope:Connect(window.container:GetPropertyChangedSignal("AbsoluteSize"), resize)
+    window.scope:Connect(header.frame:GetPropertyChangedSignal("Size"), resize)
+    resize()
+end
+
+return m
+end function __DARKLUA_BUNDLE_MODULES.G():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.G if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.G=v end return v.c end end do local function __modImpl()
+local m = {}
+m.Name = "TableInspect"
+
+local types = __DARKLUA_BUNDLE_MODULES.b()
+local ResizeSections = __DARKLUA_BUNDLE_MODULES.G()
+
+local windows = {}
+
+function m.Format(val): string
+    local kind = type(val)
+    if kind == "string" then
+        local text = string.format("%q", string.sub(val, 1, 120))
+        if #val > 120 then text ..= "..." end
+        return text
+    end
+    if kind == "table" then return "{...}" end
+    if kind == "function" then
+        local succ, name = pcall(debug.info, val, "n")
+        if not succ or not name or name == "" then name = "<anonymous>" end
+        return `function {name}`
+    end
+
+    local succ, text = pcall(tostring, val)
+    if not succ then return `<{kind}>` end
+    return text
+end
+
+--shared by the function inspector too, data stays raw even if the text is cut off
+function m.MakeNodes(val: {}): {TreeNode__DARKLUA_TYPE_w}
+    local nextId = 0
+    local function build(tbl, depth, ancestors)
+        local entries = {}
+        --use next so an inspected table cant run its own iterator
+        local key, item = next(tbl)
+        while key ~= nil and #entries < 500 do
+            table.insert(entries, { key = key, value = item })
+            key, item = next(tbl, key)
+        end
+        local truncated = key ~= nil
+        table.sort(entries, function(a, b)
+            local aType, bType = type(a.key), type(b.key)
+            if aType == bType and (aType == "number" or aType == "string") then
+                return a.key < b.key
+            end
+            return aType .. m.Format(a.key) < bType .. m.Format(b.key)
+        end)
+
+        local nodes = {}
+        for _, entry in entries do
+            local value = entry.value
+            nextId += 1
+            local node = {
+                id = nextId,
+                text = `[{m.Format(entry.key)}] = {m.Format(value)}`,
+                data = value,
+                key = entry.key,
+            }
+            if type(value) == "table" then
+                if ancestors[value] then
+                    node.text ..= " [cycle]"
+                elseif depth >= 8 then
+                    node.text ..= " [depth limit]"
+                else
+                    --only track this branch, the same table can appear somewhere else
+                    local path = table.clone(ancestors)
+                    path[value] = true
+                    node.loadChildren = function() return build(value, depth + 1, path) end
+                end
+            end
+            table.insert(nodes, node)
+        end
+        if truncated then
+            nextId += 1
+            table.insert(nodes, { id = nextId, text = "... more entries omitted (limit 500)" })
+        end
+        return nodes
+    end
+    return build(val, 0, { [val] = true })
+end
+
+function m.init(mainWindow: Window__DARKLUA_TYPE_Z)
+    local existing = windows[mainWindow]
+    if existing and not existing.window.destroyed then return existing end
+
+    local tblWindow = mainWindow:NewWindow({
+        title = "Table Inspect",
+        size = UDim2.fromOffset(750, 500),
+        position = UDim2.fromScale(0.5, 0.5),
+        visible = false,
+        closeBehavior = "hide",
+    })
+    local inspect = { window = tblWindow, history = {} }
+    windows[mainWindow] = inspect
+
+    local function populate()
+        inspect.selection = nil
+        inspect.inspectButton:SetEnabled(false)
+        inspect.backButton:SetEnabled(#inspect.history > 0)
+        inspect.heading:SetText(inspect.title)
+        inspect.details:SetText("")
+        inspect.tree:SetNodes(m.MakeNodes(inspect.value))
+    end
+
+    function inspect:Open(value: {}, title: string?, onFunction)
+        assert(type(value) == "table", "TableInspect.Open expects a table")
+        assert(onFunction == nil or type(onFunction) == "function", "onFunction must be a function")
+        assert(not tblWindow.destroyed, "inspector destroyed")
+        inspect.value = value
+        inspect.title = title or "Table"
+        --the caller decides where functions open, no require back to FunctionInspect
+        inspect.onFunction = onFunction
+        table.clear(inspect.history)
+        populate()
+        tblWindow:Show()
+        return inspect
+    end
+
+    function inspect:Refresh()
+        if not inspect.value then return end
+        populate()
+    end
+
+    function inspect:Destroy()
+        tblWindow:Destroy()
+    end
+
+    --window
+    local header = tblWindow:NewSection("Table", "top")
+    inspect.heading = header:NewLabel({ text = "No table selected", height = 40 })
+    local actions = header:NewRow()
+    inspect.backButton = actions:NewButton({ text = "Back", width = 60 }, function()
+        local previous = table.remove(inspect.history)
+        if not previous then return end
+        inspect.value = previous.value
+        inspect.title = previous.title
+        populate()
+    end)
+    actions:NewButton({ text = "Refresh", width = 70 }, function() inspect:Refresh() end)
+    inspect.inspectButton = actions:NewButton({ text = "Inspect selected", width = 130 }, function()
+        local node = inspect.selection
+        if not node then return end
+        if type(node.data) == "table" then
+            table.insert(inspect.history, { value = inspect.value, title = inspect.title })
+            inspect.value = node.data
+            inspect.title = node.text
+            populate()
+            return
+        end
+        if type(node.data) == "function" and inspect.onFunction then
+            inspect.onFunction(node.data, node.text)
+        end
+    end)
+    inspect.backButton:SetEnabled(false)
+    inspect.inspectButton:SetEnabled(false)
+    inspect.tree = tblWindow:NewSection("Entries", "left"):NewTree({
+        height = 320, maxDepth = 8, emptyText = "Empty table",
+    })
+    inspect.details = tblWindow:NewSection("Selected value", "right"):NewTextViewer({ height = 320 })
+    ResizeSections.init(tblWindow, header, { { inspect.tree }, { inspect.details } })
+    inspect.tree:OnSelected(function(node)
+        inspect.selection = node
+        inspect.inspectButton:SetEnabled(false)
+        if not node then
+            inspect.details:SetText("")
+            return
+        end
+
+        local value = node.data
+        if type(value) == "string" then
+            inspect.details:SetText(value)
+        else
+            inspect.details:SetText(m.Format(value))
+        end
+        if type(value) == "table" or (type(value) == "function" and inspect.onFunction) then
+            inspect.inspectButton:SetEnabled(true)
+        end
+    end)
+
+    tblWindow.scope:Add(function()
+        if windows[mainWindow] == inspect then windows[mainWindow] = nil end
+        inspect.value = nil
+        inspect.selection = nil
+        inspect.onFunction = nil
+        table.clear(inspect.history)
+    end)
+    return inspect
+end
+
+function m.Open(mainWindow: Window__DARKLUA_TYPE_Z, value: {}, title: string?, onFunction)
+    return m.init(mainWindow):Open(value, title, onFunction)
+end
+
+return m
+end function __DARKLUA_BUNDLE_MODULES.H():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.H if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.H=v end return v.c end end do local function __modImpl()
+local m = {}
+m.Name = "FunctionInspect"
+
+local types = __DARKLUA_BUNDLE_MODULES.b()
+local TableInspect = __DARKLUA_BUNDLE_MODULES.H()
+local ResizeSections = __DARKLUA_BUNDLE_MODULES.G()
+
+--one inspector per main window, removed when its window gets destroyed
+local windows = {}
+
+local function getValues(func, name)
+    local api = debug[name]
+    if type(api) ~= "function" then
+        return false, `debug.{name} is unavailable`
+    end
+
+    local succ, values = pcall(api, func)
+    if not succ then
+        if type(values) ~= "string" then values = TableInspect.Format(values) end
+        return false, values
+    end
+    if type(values) ~= "table" then
+        return false, `debug.{name} did not return a table`
+    end
+
+    return true, values
+end
+
+function m.init(mainWindow: Window__DARKLUA_TYPE_Z)
+    local existing = windows[mainWindow]
+    if existing and not existing.window.destroyed then return existing end
+
+    local funcWindow = mainWindow:NewWindow({
+        title = "Function Inspect",
+        size = UDim2.fromOffset(520, 420),
+        position = UDim2.new(1, -16, 0.5, 0),
+        visible = false,
+        closeBehavior = "hide",
+    })
+    funcWindow.frame.AnchorPoint = Vector2.new(1, 0.5)
+    local inspect = { window = funcWindow, history = {} }
+    windows[mainWindow] = inspect
+
+    local function populate(info)
+        inspect.current = info
+        inspect.selection = nil
+        inspect.inspectButton:SetEnabled(false)
+        inspect.backButton:SetEnabled(#inspect.history > 0)
+
+        --metadata
+        local succ, name, source = pcall(debug.info, info.target, "ns")
+        if not succ or not name or name == "" then name = info.name or "<anonymous>" end
+        if not succ or not source or source == "" then source = "<unknown>" end
+        local kind = "Function"
+        if info.isProto then kind = "Prototype" end
+        inspect.heading:SetText(`{kind}: {name}\nSource: {source}`)
+
+        --constants and upvalues use the same table view
+        for api, tree in {
+            getconstants = inspect.constants,
+            getupvalues = inspect.upvalues,
+        } do
+            --inactive protos have constants but no live upvalues
+            if info.isProto and api == "getupvalues" then
+                tree:SetNodes({ { id = "inactive", text = "Inactive prototypes have no live upvalues" } })
+                continue
+            end
+
+            local succ, values = getValues(info.target, api)
+            if not succ then
+                tree:SetNodes({ { id = "error", text = `Unavailable: {values}` } })
+                continue
+            end
+            tree:SetNodes(TableInspect.MakeNodes(values))
+        end
+
+        --protos are opaque, dont treat a proxy like a normal table
+        local succ, protos = getValues(info.target, "getprotos")
+        if not succ then
+            inspect.protos:SetNodes({ { id = "error", text = `Unavailable: {protos}` } })
+            return
+        end
+
+        local nodes = {}
+        for index, proto in next, protos do
+            local succ, name = pcall(debug.info, proto, "n")
+            if not succ or not name or name == "" then name = "<anonymous>" end
+            table.insert(nodes, {
+                id = index,
+                text = `[{index}] {name}`,
+                data = proto,
+                isProto = true,
+            })
+        end
+        inspect.protos:SetNodes(nodes)
+    end
+
+    function inspect:Open(func, name: string?)
+        assert(type(func) == "function", "FunctionInspect.Open expects a function")
+        assert(not funcWindow.destroyed, "inspector destroyed")
+        table.clear(inspect.history)
+        populate({ target = func, name = name, isProto = false })
+        funcWindow:Show()
+        return inspect
+    end
+
+    function inspect:Refresh()
+        if not inspect.current then return end
+        populate(inspect.current)
+    end
+
+    function inspect:Destroy()
+        funcWindow:Destroy()
+    end
+
+    --window
+    local header = funcWindow:NewSection("Selected function", "top")
+    inspect.heading = header:NewLabel({ text = "No function selected", height = 40 })
+    local actions = header:NewRow()
+    inspect.backButton = actions:NewButton({ text = "Back", width = 60 }, function()
+        local previous = table.remove(inspect.history)
+        if not previous then return end
+        populate(previous)
+    end)
+    actions:NewButton({ text = "Refresh", width = 70 }, function() inspect:Refresh() end)
+    inspect.inspectButton = actions:NewButton({ text = "Inspect selected", width = 130 }, function()
+        local node = inspect.selection
+        if not node then return end
+        local value = node.data
+        if node.isProto or type(value) == "function" then
+            table.insert(inspect.history, inspect.current)
+            populate({ target = value, name = node.text, isProto = node.isProto == true })
+            return
+        end
+        if type(value) == "table" then
+            --pass the callback down so TableInspect never needs to require us
+            TableInspect.Open(mainWindow, value, node.text, function(func, name)
+                m.Open(mainWindow, func, name)
+            end)
+        end
+    end)
+    inspect.backButton:SetEnabled(false)
+    inspect.inspectButton:SetEnabled(false)
+
+    inspect.upvalues = funcWindow:NewSection("Upvalues", "left"):NewTree({
+        height = 220, maxDepth = 8, emptyText = "No upvalues",
+    })
+    inspect.constants = funcWindow:NewSection("Constants", "right"):NewTree({
+        height = 110, maxDepth = 8, emptyText = "No constants",
+    })
+    inspect.protos = funcWindow:NewSection("Protos", "right"):NewTree({
+        height = 60, emptyText = "No protos",
+    })
+    ResizeSections.init(funcWindow, header, {
+        { inspect.upvalues }, { inspect.constants, inspect.protos },
+    })
+    for _, tree in { inspect.protos, inspect.constants, inspect.upvalues } do
+        tree:OnSelected(function(node)
+            inspect.selection = node
+            inspect.inspectButton:SetEnabled(false)
+            if not node then return end
+            local kind = type(node.data)
+            if node.isProto or kind == "function" or kind == "table" then
+                inspect.inspectButton:SetEnabled(true)
+            end
+        end)
+    end
+
+    funcWindow.scope:Add(function()
+        if windows[mainWindow] == inspect then windows[mainWindow] = nil end
+        inspect.current = nil
+        inspect.selection = nil
+        table.clear(inspect.history)
+    end)
+    return inspect
+end
+
+function m.Open(mainWindow: Window__DARKLUA_TYPE_Z, func, name: string?)
+    return m.init(mainWindow):Open(func, name)
+end
+
+return m
+end function __DARKLUA_BUNDLE_MODULES.I():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.I if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.I=v end return v.c end end do local function __modImpl()
 local m = {}
 m.Name = "Functions"
 
 local types = __DARKLUA_BUNDLE_MODULES.b()
+local InspectWindow = __DARKLUA_BUNDLE_MODULES.I()
+
+local function getName(func): string?
+    local succ, name = pcall(debug.info, func, "n")
+    if not succ or name == "" then return nil end
+    return name
+end
+
+local function parse(str: string): {string}
+    local result = {}
+
+    for value in string.gmatch(str, "[^,]+") do
+        local trimmed = string.match(value, "^%s*(.-)%s*$")
+        if trimmed and trimmed ~= "" then
+            table.insert(result, trimmed)
+        end
+    end
+
+    return result
+end
+
+local function matchesConstants(func, wanted): boolean
+    if not wanted or #wanted == 0 then return true end
+
+    local succ, constants = pcall(debug.getconstants, func)
+    if not succ then return false end
+
+    for _, expected in wanted do
+        local matched = false
+        for _, actual in constants do
+            if actual == expected then
+                matched = true
+                break
+            end
+        end
+        if not matched then return false end
+    end
+
+    return true
+end
+
+local function search(funcName, consts, exactMatch, resultsList)
+    local opts = {}
+    if funcName and funcName ~= "" then
+        opts.Name = funcName
+    end
+    if consts and #consts > 0 then
+        opts.Constants = consts
+    end
+
+    local found = {}
+
+    if exactMatch then
+        found = filtergc("function", opts)
+    else
+        local query = string.lower(funcName or "")
+
+        for _, func in getgc(false) do
+            if type(func) ~= "function" then continue end
+            if isexecutorclosure(func) then continue end
+
+            local name = getName(func) or ""
+            if query ~= "" and not string.find(string.lower(name), query, 1, true) then
+                continue
+            end
+            if not matchesConstants(func, consts) then continue end
+            table.insert(found, func)
+        end
+    end
+
+    print("Search filters:", funcName, consts)
+    print("Functions found:", #found)
+    local rows = {}
+
+    for i, func in found do
+        table.insert(rows, {
+            id = i,
+            values = { name = getName(func) or "<anonymous>" },
+            data = func,
+        })
+    end
+
+    resultsList:SetRecords(rows)
+end
+
 function m.init(window: Window__DARKLUA_TYPE_Z)
     local tab = window:NewTab("Functions")
-    local section = tab:NewSection("Search Functions", "full")
+    local consts
+    local funcName
+    local exactMatch = false
 
-    section:NewTextbox({ text = "Search..." }, function(value)
-        print("Search:", value)
+    --search
+    local searchSection = tab:NewSection("Search Functions", "full")
+    searchSection:NewLabel({
+        text = "function name(partial, case insensitive)",
+    })
+    local nameInput = searchSection:NewTextbox({ text = "function name" }, function(val)
+        funcName = val
+    end)
+    searchSection:NewLabel({
+        text = "Constants (comma separated)",
+    })
+    local constantsInput = searchSection:NewTextbox({ text = "enter constants(ex: x,y,z)" }, function(val)
+        consts = parse(val)
     end)
 
-    section:NewButton({ text = "Refresh" }, function()
-        print("Refresh clicked")
+    --results
+    local resultSection = tab:NewSection("Results", "full")
+    local resultsList = resultSection:NewList({
+        showHeader = false,
+        columns = {
+            { key = "name", text = "Function name" },
+        },
+    })
+    resultsList:OnSelected(function(record)
+        if not record then return end
+        InspectWindow.Open(window, record.data, record.values.name)
     end)
 
+    searchSection:NewToggle({ text = "Exact name match", value = false }, function(val)
+        exactMatch = val
+    end)
+
+    searchSection:NewButton({ text = "Search" }, function()
+        search(funcName, consts, exactMatch, resultsList)
+    end)
+    nameInput:OnSubmitted(function()
+        search(funcName, consts, exactMatch, resultsList)
+    end)
+    constantsInput:OnSubmitted(function()
+        search(funcName, consts, exactMatch, resultsList)
+    end)
+
+    window:SelectTab(tab)
     return tab
 end
 
-return m end function __DARKLUA_BUNDLE_MODULES.G():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.G if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.G=v end return v.c end end do local function __modImpl()
+return m
+end function __DARKLUA_BUNDLE_MODULES.J():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.J if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.J=v end return v.c end end do local function __modImpl()
 local m = {}
 m.Name = "GC"
 
@@ -3057,7 +3628,7 @@ function m.init(window: Window__DARKLUA_TYPE_Z)
     return tab
 end
 
-return m end function __DARKLUA_BUNDLE_MODULES.H():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.H if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.H=v end return v.c end end do local function __modImpl()
+return m end function __DARKLUA_BUNDLE_MODULES.K():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.K if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.K=v end return v.c end end do local function __modImpl()
 local m = {}
 m.Name = "Compatibility"
 
@@ -3066,6 +3637,9 @@ local upvalue
 local tbl = {}
 local function luaClosure()
     return "fail", upvalue
+end
+local function proto()
+    local function inner() return "yes" end
 end
 --only assign if exec supports newcclosure
 local cClosure: () -> string
@@ -3089,6 +3663,7 @@ local debugGlobals = {
     "getconstants",
     "getupvalue",
     "getupvalues",
+    "getprotos",
 }
 
 function m.init()
@@ -3193,11 +3768,21 @@ function m.init()
         return false, "Failed to identify c closure"
     end
 
+    --protos
+    local protos = debug.getprotos(proto)
+    if not protos or #protos ~= 1 then
+        return false, "Expected exactly 1 proto"
+    end
+
+    if debug.getconstant(protos[1], 1) ~= "yes" then
+        return false, "Proto did not contain expected constant"
+    end
+
     local tests = #execGlobals + #debugGlobals
     return true, `{tests}/{tests} compatibility tests passed`
 end
 
-return m end function __DARKLUA_BUNDLE_MODULES.I():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.I if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.I=v end return v.c end end end--[[
+return m end function __DARKLUA_BUNDLE_MODULES.L():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.L if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.L=v end return v.c end end end--[[
 every module passes fails as 
 (false, reason: string)
 and some do optional msgs at the end for debugging
@@ -3210,10 +3795,13 @@ local Config = __DARKLUA_BUNDLE_MODULES.F()
 local mainWindow = Window.new({})
 
 local modules = {
-__DARKLUA_BUNDLE_MODULES.G()
+__DARKLUA_BUNDLE_MODULES.J()
 ,
-__DARKLUA_BUNDLE_MODULES.H(),
+__DARKLUA_BUNDLE_MODULES.K(),
 __DARKLUA_BUNDLE_MODULES.I()
+
+,
+__DARKLUA_BUNDLE_MODULES.L()
 
 
 } 
@@ -3223,10 +3811,10 @@ for _, mod in modules do
     local startTime = os.clock()
     local callOk, initOk, initMsg = pcall(function() return mod.init(mainWindow) end)
     if not callOk then
-        warn(`Error initializing module {mod.Name}: {initOk}`)
+        warn(`[INIT] module {mod.Name} threw an error:\n{initOk}`)
         continue
     elseif not initOk then
-        warn(`Module initialization failed: {initMsg}`)
+        warn(`[INIT] {mod.Name} failed: {initMsg or "no reason provided"}`)
         continue
     end
     local deltaTime = os.clock() - startTime
@@ -3234,13 +3822,14 @@ for _, mod in modules do
         print(`[INIT]: {mod.Name} initialized in {deltaTime} seconds.`)
     end
     if Config.InitLogs and initMsg then
-        if Config.InitLogs and initMsg then
-            print(`[INIT] {mod.Name} - {initMsg}`)
-        end
+        print(`[INIT] {mod.Name} - {initMsg}`)
     end
     loadedModules += 1
 end 
 
 print(`[INIT]:{loadedModules}/{#modules} modules loaded successfully.`)
+if loadedModules < #modules then
+    warn(`[INIT] {#modules - loadedModules} module(s) failed to initialize; see warnings above.`)
+end
 
 mainWindow:Show()

@@ -3,8 +3,13 @@
 # DebugSuite
 
 A Roblox/Luau debugging workspace built on **SimpleUI**, a reusable UI library
-for executor runtimes. The Functions and GC tabs currently have search and
-refresh placeholders; the app also checks the executor APIs it needs.
+for executor runtimes. The Functions tab searches by name and constants: press
+Enter in either search textbox or click **Search**. Clicking away updates the
+filter without searching. The GC tab has refresh placeholders; the app also
+checks the executor APIs it needs.
+
+The Function and Table Inspect windows expand their scrolling panels when
+resized. Short windows keep a minimum panel height and scroll the outer content.
 
 ## Features
 

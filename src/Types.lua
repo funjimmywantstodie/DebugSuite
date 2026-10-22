@@ -43,13 +43,13 @@ export type ConsoleOpts = {
     syntax: Syntax?, syntaxTheme: SyntaxTheme?,
 }
 export type Record = { id: string | number, values: {[string]: any}, data: any? }
-export type Column = { key: string, text: string?, width: number? }
+export type Column = { key: string, text: string?, width: number?, syntax: Syntax? }
 export type ListOpts = {
     text: string?, size: UDim2?, height: number?, columns: {Column}?,
     rowHeight: number?, maxRecords: number?,
 }
 export type TreeNode = {
-    id: string | number, text: string, data: any?, children: {TreeNode}?,
+    id: string | number, text: string, data: any?, value: any?, inspectable: boolean?, children: {TreeNode}?,
     loadChildren: (() -> {TreeNode})?,
 }
 export type TreeOpts = { text: string?, size: UDim2?, height: number?, maxDepth: number?, emptyText: string? }
@@ -115,16 +115,16 @@ export type Console = Component & {
 }
 export type List = Component & {
     records: {Record}, selectedId: (string | number)?,
-    SetRecords: (self: List, records: {Record}) -> (),
+    SetRecords: (self: List, records: {Record}, notify: boolean?) -> (),
     Append: (self: List, records: {Record}) -> (),
-    Refresh: (self: List) -> (),
-    SetFilter: (self: List, value: string) -> (),
+    Refresh: (self: List, notify: boolean?) -> (),
+    SetFilter: (self: List, value: string, notify: boolean?) -> (),
     SetSort: (self: List, key: string, ascending: boolean?) -> (),
-    Select: (self: List, id: string | number) -> (),
+    Select: (self: List, id: string | number, notify: boolean?) -> (),
     OnSelected: (self: List, callback: (Record?) -> ()) -> RBXScriptConnection,
 }
 export type Tree = Component & {
-    SetNodes: (self: Tree, nodes: {TreeNode}) -> (),
+    SetNodes: (self: Tree, nodes: {TreeNode}, preserveState: boolean?, notify: boolean?) -> (),
     Expand: (self: Tree, id: string | number, value: boolean) -> (),
     Select: (self: Tree, id: string | number) -> (),
     OnSelected: (self: Tree, callback: (TreeNode?) -> ()) -> RBXScriptConnection,
@@ -135,6 +135,7 @@ export type TextViewer = Component & {
     GetText: (self: TextViewer) -> string,
     SetSyntax: (self: TextViewer, value: Syntax?) -> (),
     OnChanged: (self: TextViewer, callback: (string) -> ()) -> RBXScriptConnection,
+    OnSyntaxChanged: (self: TextViewer, callback: (boolean) -> ()) -> RBXScriptConnection,
 }
 export type Toggle = Button & {
     SetValue: (self: Toggle, value: boolean) -> (),

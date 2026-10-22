@@ -383,6 +383,29 @@ local records = {}
 for i = 1, 1000 do records[i] = { id = i, values = { count = i, text = "event " .. i } } end
 list:SetRecords(records)
 assert(#list.rows < 20 and #list.records == 1000)
+local firstRow, secondRow = list.rows[1], list.rows[2]
+local firstCell = firstRow:GetChildren()[1]
+local scrollConnections = connections
+local canvasSize = list.viewport.CanvasSize
+list.viewport.CanvasPosition = Vector2.new(10, 1)
+assert(list.rows[1] == firstRow and list.rows[2] == secondRow)
+assert(list.viewport.CanvasSize == canvasSize and connections == scrollConnections)
+assert(list.headers[1].Position.X.Offset == -10)
+list.viewport.CanvasPosition = Vector2.new(10, list.rowHeight + 1)
+assert(list.rows[1] == secondRow and not secondRow.destroyed and firstRow.destroyed)
+assert(not firstCell.MouseButton1Click.listeners[1].Connected)
+assert(connections == scrollConnections)
+secondRow:GetChildren()[1].MouseButton1Click:Fire()
+assert(list.selectedId == 2 and list.rows[1] == secondRow)
+list:Append({ { id = 2, values = { count = 222, text = "event 2" } } })
+assert(list.rows[1] == secondRow and secondRow:GetChildren()[1].Text == "222")
+secondRow:GetChildren()[1].MouseButton1Click:Fire()
+assert(list.selectedRecord.values.count == 222)
+for i = 1, 20 do
+    list.viewport.CanvasPosition = Vector2.new(0, i * 100)
+    assert(connections == scrollConnections)
+end
+list.viewport.CanvasPosition = Vector2.zero
 list:Select(999)
 list:SetSort("count", false)
 assert(list.filtered[1].id == 1000 and list.selectedId == 999)
@@ -406,6 +429,24 @@ assert(#list.rows < 20)
 list:Clear()
 assert(#list.records == 0 and #list.rows == 0)
 
+-- A styled preview renders escaped markup without changing application data.
+local previewList = panel:NewList({ columns = { { key = "name" }, { key = "preview", syntax = "lua" } } })
+local rawPreview = 'value = "<b>raw</b> &lt;"; callback = function; nested = table'
+previewList:SetRecords({ { id = "styled", values = { name = "<b>name</b>", preview = rawPreview } } })
+local previewCells = previewList.rowViews.styled.cells
+assert(previewCells[1].Text == "<b>name</b>" and previewCells[1].RichText == false)
+assert(previewCells[2].RichText and previewCells[2].Text == SyntaxHighlight.Highlight(rawPreview))
+assert(previewCells[2].Text:find("&lt;b&gt;raw&lt;/b&gt; &amp;lt;", 1, true), "Inspected markup was interpreted as formatting")
+previewList:OnSelected(function(record)
+    if record then assert(record.values.preview == rawPreview, "Formatting leaked into selected data") end
+end)
+previewList:Select("styled")
+previewList:SetFilter("<b>raw</b>")
+assert(#previewList.filtered == 1)
+previewList:SetFilter("<font color=")
+assert(#previewList.filtered == 0, "Filtering used generated RichText tags")
+previewList:Destroy()
+
 local adaptive = panel:NewList({ columns = {
     { key = "name" }, { key = "count", width = 60 },
 } })
@@ -415,6 +456,10 @@ adaptive.viewport.AbsoluteSize = Vector2.new(150, 200)
 assert(adaptive.width == 142 and adaptive.viewport.CanvasSize.X.Offset == 0)
 adaptive.viewport.AbsoluteSize = Vector2.new(100, 200)
 assert(adaptive.viewport.CanvasSize.X.Offset == 120)
+adaptive:SetRecords({ { id = "resize", values = { name = "resize", count = 1 } } })
+local adaptiveRow = adaptive.rows[1]
+adaptive.viewport.AbsoluteSize = Vector2.new(300, 200)
+assert(adaptive.rows[1] == adaptiveRow and adaptiveRow.Size.X.Offset == 292)
 adaptive.viewport.CanvasPosition = Vector2.new(10, 0)
 assert(adaptive.headers[1].Position.X.Offset == -10)
 
@@ -427,18 +472,52 @@ end }
 tree:SetNodes({ node })
 assert(loads == 0 and not tree.emptyLabel.Visible)
 assert(tree.rows[1]:GetChildren()[2].Text == "Expand v")
+local selections = 0
+tree:OnSelected(function() selections += 1 end)
 tree.rows[1]:GetChildren()[1].MouseButton1Click:Fire()
+assert(loads == 0 and selections == 1 and #tree.visibleNodes == 1, "Selecting a row must not expand it")
+tree.rows[1]:GetChildren()[2].MouseButton1Click:Fire()
 assert(loads == 1 and #tree.visibleNodes == 2)
+assert(selections == 1, "Expanding must not select or preview the node")
 assert(tree.rows[1]:GetChildren()[2].Text == "Collapse ^")
 assert(tree.rows[2].Position.X.Offset > tree.rows[1].Position.X.Offset)
 tree:Expand("root", false)
 tree:Expand("root", true)
 assert(loads == 1)
+tree:SetNodes({ { id = "empty", text = "empty", loadChildren = function() return {} end } })
+tree:Expand("empty", true)
+assert(not tree.expanded.empty and tree.rowViews.empty.state == nil, "Empty loaded nodes must not remain expanded")
+tree:Select("empty")
+assert(tree.rowViews.empty.state == nil, "Selection recreated an empty node's toggle")
+tree:SetNodes({ { id = "stable", text = "stable", children = { { id = "value", text = "before" } } } })
+tree:Expand("stable", true)
+tree:Select("value")
+tree:SetNodes({ { id = "stable", text = "stable", children = { { id = "value", text = "after" } } } }, true)
+assert(tree.expanded.stable and tree.selectedId == "value" and tree.visibleNodes[2].node.text == "after")
+tree:SetNodes({ { id = "stable", text = "stable" } }, true)
+assert(tree.selectedId == nil)
 local cycle = { id = "cycle", text = "cycle" }
 cycle.children = { cycle }
 tree:SetNodes({ cycle })
 tree:Expand("cycle", true)
 assert(#tree.visibleNodes == 1)
+local treeNodes = {}
+for i = 1, 100 do treeNodes[i] = { id = i, text = "node " .. i } end
+tree:SetNodes(treeNodes)
+local firstNodeRow, secondNodeRow = tree.rows[1], tree.rows[2]
+local treeConnections = connections
+local flattened = tree.visibleNodes
+tree.frame.CanvasPosition = Vector2.new(0, 1)
+assert(tree.rows[1] == firstNodeRow and tree.rows[2] == secondNodeRow)
+assert(tree.visibleNodes == flattened and connections == treeConnections)
+tree.frame.CanvasPosition = Vector2.new(0, 35)
+assert(tree.rows[1] == secondNodeRow and firstNodeRow.destroyed)
+secondNodeRow:GetChildren()[1].MouseButton1Click:Fire()
+assert(tree.selectedId == 2 and tree.rows[1] == secondNodeRow)
+for i = 1, 20 do
+    tree.frame.CanvasPosition = Vector2.new(0, i * 100)
+    assert(connections == treeConnections)
+end
 tree:Clear()
 assert(tree.emptyLabel.Visible and #tree.rows == 0)
 
@@ -465,7 +544,12 @@ highlighted.textbox.FocusLost:Fire(false)
 assert(highlighted.highlightLabel.Visible and highlighted.highlightLabel.Text == SyntaxHighlight.Highlight(rawChange))
 highlighted:SetSyntax(false)
 assert(not highlighted.highlightLabel.Visible and highlighted.textbox.TextTransparency == 0)
+local syntaxChanges = 0
+highlighted:OnSyntaxChanged(function(value) assert(type(value) == "boolean") syntaxChanges += 1 end)
+highlighted:SetSyntax(false)
+assert(syntaxChanges == 0)
 highlighted:SetSyntax("lua")
+assert(syntaxChanges == 1)
 highlighted:Clear()
 assert(highlighted:GetText() == "" and highlighted.highlightLabel.Text == "")
 local codeConsole = section:NewConsole({ syntax = "lua", syntaxTheme = { keyword = "#123456" } })

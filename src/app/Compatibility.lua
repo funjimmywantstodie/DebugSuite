@@ -1,98 +1,87 @@
+-- Passive discovery: never hook or mutate a probe function.
 local m = {}
-
-local upvalue = "fail"
-local function testFunction()
-    local _val = upvalue
-    return "fail"
+m.__index = m
+local definitions = {
+    { "getgenv", "Required by the UI library" },
+    { "cloneref", "Required by the UI service cache" },
+    { "getgc", "Function and table inventory" },
+    { "filtergc", "Inventory fallback" },
+    { "debug.info", "Function metadata" },
+    { "debug.getinfo", "Executor metadata fallback" },
+    { "debug.getconstants", "Constant inspection" },
+    { "debug.getupvalues", "Upvalue inspection" },
+    { "debug.getprotos", "Nested prototype inspection" },
+    { "setclipboard", "Copy raw reports and paths" },
+    { "identifyexecutor", "Runtime identification" },
+    { "hookfunction", "Opt-in function tracing" },
+    { "restorefunction", "Remove ordinary hooks" },
+    { "newcclosure", "Ordinary hook callback wrapper" },
+    { "iscclosure", "Skip C-closure constants / validate OTH targets" },
+    { "islclosure", "Identify Luau closures for constant search" },
+    { "isfunctionhooked", "Avoid replacing existing hooks" },
+    { "getrawmetatable", "Outgoing remote namecall target" },
+    { "getnamecallmethod", "Outgoing remote method filter" },
+    { "setnamecallmethod", "Preserve outgoing remote method during capture" },
+    { "oth.hook", "Volt C-closure tracing backend" },
+    { "oth.unhook", "Remove Volt OTH hooks" },
+    { "oth.is_hook_thread", "Volt hook-context diagnostics" },
+    { "oth.get_original_thread", "Volt original-thread diagnostics" },
+    { "oth.get_root_callback", "Volt root-callback diagnostics" },
+}
+function m.new()
+    return setmetatable({ functions = {}, records = {} }, m):Refresh()
 end
---only check the most used globals that i actually need, no point in remaking sunc lol
-local execGlobals = {
-    "hookfunction",
-    "restorefunction",
-    "filtergc"
-}
-
-local debugGlobals = {
-    "setconstant",
-    "setupvalue",
-    "getconstant",
-    "getconstants",
-    "getupvalue",
-    "getupvalues",
-}
-
-function m.init()
-    --===== REQUIRED GLOBALS =====
-    if not getgenv then return false, "missing getgenv" end
-    for namespace, name in {
-        [getgenv()] = execGlobals,
-        [debug] = debugGlobals,
-    } do
-        for _, f in name do
-            if typeof(rawget(namespace, f)) ~= "function" then
-                return false, `Missing global: {f}`
-            end
+function m:Refresh()
+    local env = {}
+    if type(getgenv) == "function" then
+        local ok, value = pcall(getgenv)
+        if ok and type(value) == "table" then env = value end
+    end
+    local direct = { getgenv = getgenv, cloneref = cloneref, getgc = getgc, filtergc = filtergc,
+        setclipboard = setclipboard, identifyexecutor = identifyexecutor,
+        hookfunction = hookfunction, restorefunction = restorefunction, newcclosure = newcclosure,
+        iscclosure = iscclosure, islclosure = islclosure, isfunctionhooked = isfunctionhooked,
+        getrawmetatable = getrawmetatable, getnamecallmethod = getnamecallmethod, setnamecallmethod = setnamecallmethod }
+    self.functions, self.records = {}, {}
+    for _, definition in definitions do
+        local name = definition[1]
+        local library, member = name:match("^(%w+)%.(.+)$")
+        local value
+        if member then
+            local namespace = rawget(env, library)
+            if type(namespace) == "table" then value = rawget(namespace, member) end
+            local fallback = if library == "debug" then debug elseif library == "oth" then oth else nil
+            if type(value) ~= "function" and type(fallback) == "table" then value = rawget(fallback, member) end
+        else
+            value = rawget(env, name)
+            if type(value) ~= "function" then value = direct[name] end
         end
+        if type(value) == "function" then self.functions[name] = value end
+        table.insert(self.records, { id = name, values = { name = name,
+            status = if self.functions[name] then "available" else "missing", feature = definition[2] } })
     end
-    
-    --===== CONSTANT =====
-    local const1 = debug.getconstant(testFunction, 1)
-    if not const1 then
-        return false, "Failed to get constant"
-    end
-
-    if const1 ~= debug.getconstants(testFunction)[1] then
-        return false, "getconstants mismatch"
-    end
-
-    debug.setconstant(testFunction, 1, "yes")
-    if debug.getconstant(testFunction, 1) ~= "yes" then
-        return false, "Failed to set constant"
-    end
-    --reset for later tests
-    debug.setconstant(testFunction, 1, "fail")
-
-    --===== UPVALUE =====
-    local uv = debug.getupvalue(testFunction,1)
-    if not uv then
-        return false, "Failed to get upvalue"
-    end
-    if uv ~= debug.getupvalues(testFunction)[1] then
-        return false, "getupvalues mismatch"
-    end
-
-    debug.setupvalue(testFunction, 1, "yes")
-    if debug.getupvalue(testFunction, 1) ~= "yes" then
-        return false, "Failed to set upvalue"
-    end
-    --reset for later tests
-    debug.setupvalue(testFunction, 1, "fail")
-
-    --===== GC =====
-    --run gc tests before function tests since the function ones add referances to gc that get in the way
-    local found = filtergc("function", {IgnoreExecutor = false, Constants = {"fail"}, UpvalueCount = 1})
-    if not next(found) then
-        return false, "Failed to find function in filtergc"
-    end
-
-    if not table.find(found, testFunction) then
-        return false, "filtergc did not return the correct function"
-    end
-
-    --FUNCTION-----
-    hookfunction(testFunction, function()
-        return "yes"
-    end)
-    if testFunction() ~= "yes" then
-        return false, "Failed to hook function"
-    end
-
-    restorefunction(testFunction)
-    if testFunction() ~= "fail" then
-        return false, "Failed to restore function"
-    end
-
-    return true
+    return self
 end
-
+function m:Has(name) return self.functions[name] ~= nil end
+function m:Call(name, ...)
+    local fn = self.functions[name]
+    if not fn then return false, "Unavailable API: " .. name end
+    return pcall(fn, ...)
+end
+function m:IsLuaClosure(fn)
+    local ok, value = self:Call("islclosure", fn)
+    if ok and type(value) == "boolean" then return value end
+    ok, value = self:Call("iscclosure", fn)
+    if ok and type(value) == "boolean" then return not value end
+    -- An unavailable classifier must not hide otherwise readable functions.
+    return nil
+end
+function m:Inventory(kind)
+    local ok, values
+    if self:Has("getgc") then ok, values = self:Call("getgc", kind == "table")
+    else ok, values = self:Call("filtergc", kind, {}, false) end
+    if not ok then error(values, 0) end
+    if type(values) ~= "table" then error("GC inventory returned a non-table", 0) end
+    return values
+end
 return m

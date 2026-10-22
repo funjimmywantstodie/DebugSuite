@@ -12,8 +12,15 @@ function m:render()
 end
 
 function m:SetSyntax(value)
-    self.highlighted = syntaxHighlight.ValidateSyntax(value)
+    local highlighted = syntaxHighlight.ValidateSyntax(value)
+    local changed = self.highlighted ~= highlighted
+    self.highlighted = highlighted
     self:render()
+    if changed then self.syntaxChanged:Fire(highlighted) end
+end
+
+function m:OnSyntaxChanged(callback)
+    return self.scope:Connect(self.syntaxChanged.Event, callback)
 end
 
 function m:SetText(value: string)
@@ -86,6 +93,7 @@ function m.new(owner, opts)
     display.Parent = text
     self.highlightLabel = display
     self.changed = lifecycle.event(self)
+    self.syntaxChanged = lifecycle.event(self)
     self.scope:Connect(text:GetPropertyChangedSignal("Text"), function()
         self:render()
         self.changed:Fire(text.Text)

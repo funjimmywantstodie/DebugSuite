@@ -59,7 +59,7 @@ type ConsoleOpts__DARKLUA_TYPE_r = {
 
 type Record__DARKLUA_TYPE_s = { id: string | number, values: {[string]: any}, data: any? }
 
-type Column__DARKLUA_TYPE_t = { key: string, text: string?, width: number? }
+type Column__DARKLUA_TYPE_t = { key: string, text: string?, width: number?, syntax: Syntax__DARKLUA_TYPE_o? }
 
 type ListOpts__DARKLUA_TYPE_u = {
     text: string?, size: UDim2?, height: number?, columns: {Column__DARKLUA_TYPE_t}?,
@@ -67,7 +67,7 @@ type ListOpts__DARKLUA_TYPE_u = {
 }
 
 type TreeNode__DARKLUA_TYPE_v = {
-    id: string | number, text: string, data: any?, children: {TreeNode__DARKLUA_TYPE_v}?,
+    id: string | number, text: string, data: any?, value: any?, inspectable: boolean?, children: {TreeNode__DARKLUA_TYPE_v}?,
     loadChildren: (() -> {TreeNode__DARKLUA_TYPE_v})?,
 }
 
@@ -144,17 +144,17 @@ type Console__DARKLUA_TYPE_H = Component__DARKLUA_TYPE_e & {
 
 type List__DARKLUA_TYPE_I = Component__DARKLUA_TYPE_e & {
     records: {Record__DARKLUA_TYPE_s}, selectedId: (string | number)?,
-    SetRecords: (self: List__DARKLUA_TYPE_I, records: {Record__DARKLUA_TYPE_s}) -> (),
+    SetRecords: (self: List__DARKLUA_TYPE_I, records: {Record__DARKLUA_TYPE_s}, notify: boolean?) -> (),
     Append: (self: List__DARKLUA_TYPE_I, records: {Record__DARKLUA_TYPE_s}) -> (),
-    Refresh: (self: List__DARKLUA_TYPE_I) -> (),
-    SetFilter: (self: List__DARKLUA_TYPE_I, value: string) -> (),
+    Refresh: (self: List__DARKLUA_TYPE_I, notify: boolean?) -> (),
+    SetFilter: (self: List__DARKLUA_TYPE_I, value: string, notify: boolean?) -> (),
     SetSort: (self: List__DARKLUA_TYPE_I, key: string, ascending: boolean?) -> (),
-    Select: (self: List__DARKLUA_TYPE_I, id: string | number) -> (),
+    Select: (self: List__DARKLUA_TYPE_I, id: string | number, notify: boolean?) -> (),
     OnSelected: (self: List__DARKLUA_TYPE_I, callback: (Record__DARKLUA_TYPE_s?) -> ()) -> RBXScriptConnection,
 }
 
 type Tree__DARKLUA_TYPE_J = Component__DARKLUA_TYPE_e & {
-    SetNodes: (self: Tree__DARKLUA_TYPE_J, nodes: {TreeNode__DARKLUA_TYPE_v}) -> (),
+    SetNodes: (self: Tree__DARKLUA_TYPE_J, nodes: {TreeNode__DARKLUA_TYPE_v}, preserveState: boolean?, notify: boolean?) -> (),
     Expand: (self: Tree__DARKLUA_TYPE_J, id: string | number, value: boolean) -> (),
     Select: (self: Tree__DARKLUA_TYPE_J, id: string | number) -> (),
     OnSelected: (self: Tree__DARKLUA_TYPE_J, callback: (TreeNode__DARKLUA_TYPE_v?) -> ()) -> RBXScriptConnection,
@@ -166,6 +166,7 @@ type TextViewer__DARKLUA_TYPE_K = Component__DARKLUA_TYPE_e & {
     GetText: (self: TextViewer__DARKLUA_TYPE_K) -> string,
     SetSyntax: (self: TextViewer__DARKLUA_TYPE_K, value: Syntax__DARKLUA_TYPE_o?) -> (),
     OnChanged: (self: TextViewer__DARKLUA_TYPE_K, callback: (string) -> ()) -> RBXScriptConnection,
+    OnSyntaxChanged: (self: TextViewer__DARKLUA_TYPE_K, callback: (boolean) -> ()) -> RBXScriptConnection,
 }
 
 type Toggle__DARKLUA_TYPE_L = Button__DARKLUA_TYPE_D & {
@@ -438,6 +439,7 @@ end function __DARKLUA_BUNDLE_MODULES.a():typeof(__modImpl())local v=__DARKLUA_B
 
 
 
+
 return {}
 end function __DARKLUA_BUNDLE_MODULES.b():typeof(__modImpl())local v=__DARKLUA_BUNDLE_MODULES.cache.b if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.b=v end return v.c end end do local function __modImpl()
 local m = {}
@@ -450,6 +452,7 @@ function m.createButton(parent: GuiObject, opts: ComponentOpts__DARKLUA_TYPE_f, 
     button.Name = opts.text
     button.BackgroundColor3 = colors.component
     button.TextColor3 = colors.text
+    button.RichText = false
     button.Text = opts.text
     button.ZIndex = zIndex or parent.ZIndex + 1
     button.Size = UDim2.new(1, 0, 0, 28)
@@ -462,6 +465,7 @@ function m.createTextbox(parent: GuiObject, opts: ComponentOpts__DARKLUA_TYPE_f,
     textbox.Name = opts.text
     textbox.BackgroundColor3 = colors.component
     textbox.TextColor3 = colors.text
+    textbox.RichText = false
     textbox.PlaceholderText = opts.text
     textbox.Text = ""
     textbox.ZIndex = zIndex or parent.ZIndex + 1
@@ -1191,24 +1195,24 @@ local colors = __DARKLUA_BUNDLE_MODULES.a()
 local ui = __DARKLUA_BUNDLE_MODULES.c()
 local lifecycle = __DARKLUA_BUNDLE_MODULES.e()
 local scope = __DARKLUA_BUNDLE_MODULES.d()
+local syntaxHighlight = __DARKLUA_BUNDLE_MODULES.j()
 
-local function render(self)
+local function render(self, scrolling)
     if self.destroyed then return end
-    self.renderScope:Destroy()
-    self.renderScope = scope.new()
-    for _, frame in self.rows do frame:Destroy() end
-    table.clear(self.rows)
-    local fixed, flexible = 0, 0
-    for _, column in self.columns do
-        if column.width then fixed += column.width else flexible += 1 end
-    end
-    local available = math.max(0, self.viewport.AbsoluteSize.X - 8)
-    local fillWidth = if flexible > 0 then math.max(60, (available - fixed) / flexible) else 0
-    self.widths = {}
-    self.width = 0
-    for i, column in self.columns do
-        self.widths[i] = column.width or fillWidth
-        self.width += self.widths[i]
+    if not scrolling then
+        local fixed, flexible = 0, 0
+        for _, column in self.columns do
+            if column.width then fixed += column.width else flexible += 1 end
+        end
+        local available = math.max(0, self.viewport.AbsoluteSize.X - 8)
+        local fillWidth = if flexible > 0 then math.max(60, (available - fixed) / flexible) else 0
+        self.widths = {}
+        self.width = 0
+        for i, column in self.columns do
+            self.widths[i] = column.width or fillWidth
+            self.width += self.widths[i]
+        end
+        self.viewport.CanvasSize = UDim2.fromOffset(if self.width > available then self.width else 0, #self.filtered * self.rowHeight)
     end
     local offset = 0
     for i, header in self.headers do
@@ -1219,34 +1223,63 @@ local function render(self)
     local height = self.rowHeight
     local first = math.max(1, math.floor(self.viewport.CanvasPosition.Y / height) + 1)
     local count = math.ceil(self.viewport.AbsoluteSize.Y / height) + 2
-    self.viewport.CanvasSize = UDim2.fromOffset(if self.width > available then self.width else 0, #self.filtered * height)
+    local active = {}
+    table.clear(self.rows)
     for index = first, math.min(#self.filtered, first + count) do
         local record = self.filtered[index]
-        local row = Instance.new("Frame")
-        row.Size = UDim2.fromOffset(math.max(self.width, self.viewport.AbsoluteSize.X - 8), height)
-        row.Position = UDim2.fromOffset(0, (index - 1) * height)
-        row.BackgroundColor3 = if record.id == self.selectedId then colors.sectionHeader else colors.section
-        row.BorderSizePixel = 0
-        row.ClipsDescendants = true
-        row.ZIndex = self.viewport.ZIndex + 1
-        row.Parent = self.viewport
-        table.insert(self.rows, row)
-        local offset = 0
-        for i, column in self.columns do
-            local value = record.values[column.key]
-            local cell = ui.createButton(row, { text = if value == nil then "" else tostring(value) })
-            cell.TextXAlignment = Enum.TextXAlignment.Left
-            cell.TextTruncate = Enum.TextTruncate.AtEnd
-            cell.BackgroundTransparency = 1
-            cell.BorderSizePixel = 0
-            cell.Position = UDim2.fromOffset(offset, 0)
-            cell.Size = UDim2.new(0, self.widths[i], 1, 0)
-            self.renderScope:Connect(cell.MouseButton1Click, function() self:Select(record.id) end)
-            local padding = Instance.new("UIPadding")
-            padding.PaddingLeft = UDim.new(0, 8)
-            padding.PaddingRight = UDim.new(0, 8)
-            padding.Parent = cell
-            offset += self.widths[i]
+        local view = self.rowViews[record.id]
+        local created = view == nil
+        if created then
+            local row = Instance.new("Frame")
+            row.BorderSizePixel = 0
+            row.ClipsDescendants = true
+            row.ZIndex = self.viewport.ZIndex + 1
+            view = { frame = row, cells = {}, scope = scope.new(), record = record }
+            self.rowViews[record.id] = view
+            for _, column in self.columns do
+                local cell = ui.createButton(row, { text = "" })
+                cell.TextXAlignment = Enum.TextXAlignment.Left
+                cell.RichText = syntaxHighlight.ValidateSyntax(column.syntax)
+                if cell.RichText then cell.Font = Enum.Font.Code end
+                cell.TextTruncate = Enum.TextTruncate.AtEnd
+                cell.BackgroundTransparency = 1
+                cell.BorderSizePixel = 0
+                view.scope:Connect(cell.MouseButton1Click, function() self:Select(view.record.id) end)
+                local padding = Instance.new("UIPadding")
+                padding.PaddingLeft = UDim.new(0, 8)
+                padding.PaddingRight = UDim.new(0, 8)
+                padding.Parent = cell
+                table.insert(view.cells, cell)
+            end
+        end
+        active[record.id] = true
+        table.insert(self.rows, view.frame)
+        if created or not scrolling then
+            view.record = record
+            local row = view.frame
+            row.Size = UDim2.fromOffset(math.max(self.width, self.viewport.AbsoluteSize.X - 8), height)
+            row.Position = UDim2.fromOffset(0, (index - 1) * height)
+            row.BackgroundColor3 = if record.id == self.selectedId then colors.sectionHeader else colors.section
+            local offset = 0
+            for i, column in self.columns do
+                local value = record.values[column.key]
+                local cell = view.cells[i]
+                local raw = if value == nil then "" else tostring(value)
+                -- Styling is display-only: filtering, selection and sorting use raw values.
+                cell.Text = if cell.RichText then syntaxHighlight.Highlight(raw) else raw
+                cell.Name = raw
+                cell.Position = UDim2.fromOffset(offset, 0)
+                cell.Size = UDim2.new(0, self.widths[i], 1, 0)
+                offset += self.widths[i]
+            end
+            if created then row.Parent = self.viewport end
+        end
+    end
+    for id, view in self.rowViews do
+        if not active[id] then
+            view.scope:Destroy()
+            view.frame:Destroy()
+            self.rowViews[id] = nil
         end
     end
 end
@@ -1264,14 +1297,17 @@ function m.new(owner, opts)
     self.records = {}
     self.filtered = {}
     self.rows = {}
+    self.rowViews = {}
     self.headers = {}
     self.columns = opts.columns or { { key = "text", text = "Text" } }
     self.rowHeight = math.max(16, opts.rowHeight or 26)
     self.maxRecords = math.max(1, opts.maxRecords or 5000)
     self.filter = ""
-    self.renderScope = scope.new()
     self.selected = lifecycle.event(self)
-    self.scope:Add(function() self.renderScope:Destroy() end)
+    self.scope:Add(function()
+        for _, view in self.rowViews do view.scope:Destroy() end
+        table.clear(self.rowViews)
+    end)
     local viewport = Instance.new("ScrollingFrame")
     viewport.BackgroundTransparency = 1
     viewport.BorderSizePixel = 0
@@ -1307,12 +1343,13 @@ function m.new(owner, opts)
     end
     self.width = offset
     render(self)
-    self.scope:Connect(viewport:GetPropertyChangedSignal("CanvasPosition"), function() render(self) end)
+    self.scope:Connect(viewport:GetPropertyChangedSignal("CanvasPosition"), function() render(self, true) end)
     self.scope:Connect(viewport:GetPropertyChangedSignal("AbsoluteSize"), function() render(self) end)
     return self
 end
 
-function m:Refresh()
+-- notify=false updates selection state without dispatching a selection event.
+function m:Refresh(notify: boolean?)
     table.clear(self.filtered)
     for _, record in self.records do
         local matches = self.filter == ""
@@ -1332,13 +1369,10 @@ function m:Refresh()
     end
     local selected
     for _, record in self.filtered do if record.id == self.selectedId then selected = record end end
-    if self.selectedId and not selected then
-        self.selectedId = nil
-        self.selectedRecord = nil
-        self.selected:Fire(nil)
-    end
-    if selected and selected ~= self.selectedRecord then
-        self.selectedRecord = selected
+    local previous, hadSelection = self.selectedRecord, self.selectedId ~= nil
+    self.selectedId = if selected then selected.id else nil
+    self.selectedRecord = selected
+    if notify ~= false and (selected ~= previous or (hadSelection and not selected)) then
         self.selected:Fire(selected)
     end
     self.viewport.CanvasPosition = Vector2.new(self.viewport.CanvasPosition.X, math.min(self.viewport.CanvasPosition.Y,
@@ -1346,7 +1380,7 @@ function m:Refresh()
     render(self)
 end
 
-function m:SetRecords(records)
+function m:SetRecords(records, notify: boolean?)
     local seen = {}
     local nextRecords = {}
     local start = math.max(1, #records - self.maxRecords + 1)
@@ -1358,7 +1392,7 @@ function m:SetRecords(records)
         if i >= start then table.insert(nextRecords, record) end
     end
     self.records = nextRecords
-    self:Refresh()
+    self:Refresh(notify)
 end
 
 function m:Append(records)
@@ -1378,9 +1412,9 @@ function m:Append(records)
     self:SetRecords(nextRecords)
 end
 
-function m:SetFilter(value: string)
+function m:SetFilter(value: string, notify: boolean?)
     self.filter = string.lower(value)
-    self:Refresh()
+    self:Refresh(notify)
 end
 
 function m:SetSort(key: string, ascending: boolean?)
@@ -1389,13 +1423,13 @@ function m:SetSort(key: string, ascending: boolean?)
     self:Refresh()
 end
 
-function m:Select(id)
+function m:Select(id, notify: boolean?)
     for _, record in self.filtered do
         if record.id == id then
             self.selectedId = id
             self.selectedRecord = record
             render(self)
-            self.selected:Fire(record)
+            if notify ~= false then self.selected:Fire(record) end
             return
         end
     end
@@ -1455,57 +1489,93 @@ local function flatten(self)
     flattenVisit(self, self.nodes, 0, {})
 end
 
-local function render(self)
+local function render(self, scrolling)
     if self.destroyed then return end
-    self.renderScope:Destroy()
-    self.renderScope = scope.new()
-    for _, row in self.rows do row:Destroy() end
-    table.clear(self.rows)
-    flatten(self)
-    self.emptyLabel.Visible = #self.visibleNodes == 0
-    self.frame.CanvasSize = UDim2.fromOffset(0, #self.visibleNodes * 34 + 16)
+    if not scrolling then
+        flatten(self)
+        self.emptyLabel.Visible = #self.visibleNodes == 0
+        self.frame.CanvasSize = UDim2.fromOffset(0, #self.visibleNodes * 34 + 16)
+    end
     local first = math.max(1, math.floor(self.frame.CanvasPosition.Y / 34) + 1)
     local count = math.ceil(self.frame.AbsoluteSize.Y / 34) + 2
+    local active = {}
+    table.clear(self.rows)
     for i = first, math.min(#self.visibleNodes, first + count) do
         local entry = self.visibleNodes[i]
         local node = entry.node
-        local canExpand = node.loadChildren ~= nil or (node.children ~= nil and #node.children > 0)
+        local children = self.loaded[node.id] or node.children
+        local canExpand = (node.loadChildren ~= nil and self.loaded[node.id] == nil) or (children ~= nil and #children > 0)
         local indent = entry.depth * 16
-        local row = Instance.new("Frame")
-        row.Name = "Node"
-        row.BackgroundTransparency = 1
-        row.BorderSizePixel = 0
-        row.Position = UDim2.fromOffset(8 + indent, 8 + (i - 1) * 34)
-        row.Size = UDim2.new(1, -24 - indent, 0, 28)
-        row.ZIndex = self.frame.ZIndex + 1
-        row.Parent = self.frame
-        local button = ui.createButton(row, { text = node.text })
-        button.TextXAlignment = Enum.TextXAlignment.Left
-        button.TextTruncate = Enum.TextTruncate.AtEnd
-        button.BackgroundTransparency = if canExpand or node.id == self.selectedId then 0 else 1
-        button.BorderSizePixel = if canExpand then 1 else 0
-        local padding = Instance.new("UIPadding")
-        padding.PaddingLeft = UDim.new(0, 8)
-        padding.PaddingRight = UDim.new(0, if canExpand then 88 else 8)
-        padding.Parent = button
-        if canExpand then
-            local state = Instance.new("TextLabel")
-            state.Name = "State"
-            state.BackgroundTransparency = 1
-            state.Size = UDim2.fromOffset(80, 28)
-            state.Position = UDim2.new(1, -84, 0, 0)
-            state.Text = if self.expanded[node.id] then "Collapse ^" else "Expand v"
-            state.TextColor3 = colors.text
-            state.Font = button.Font
-            state.TextSize = button.TextSize
-            state.ZIndex = button.ZIndex + 1
-            state.Parent = row
+        local view = self.rowViews[node.id]
+        local created = view == nil
+        if created then
+            local row = Instance.new("Frame")
+            row.Name = "Node"
+            row.BackgroundTransparency = 1
+            row.BorderSizePixel = 0
+            row.ZIndex = self.frame.ZIndex + 1
+            local button = ui.createButton(row, { text = "" })
+            button.TextXAlignment = Enum.TextXAlignment.Left
+            button.TextTruncate = Enum.TextTruncate.AtEnd
+            local padding = Instance.new("UIPadding")
+            padding.PaddingLeft = UDim.new(0, 8)
+            padding.Parent = button
+            view = { frame = row, button = button, padding = padding, scope = scope.new(), node = node, canExpand = canExpand }
+            view.scope:Add(function() if view.stateConnection then view.stateConnection:Disconnect() end end)
+            self.rowViews[node.id] = view
+            view.scope:Connect(button.MouseButton1Click, function()
+                self:Select(view.node.id)
+            end)
         end
-        table.insert(self.rows, row)
-        self.renderScope:Connect(button.MouseButton1Click, function()
-            if canExpand then self:Expand(node.id, not self.expanded[node.id]) end
-            self:Select(node.id)
-        end)
+        active[node.id] = true
+        table.insert(self.rows, view.frame)
+        if created or not scrolling then
+            view.node = node
+            view.canExpand = canExpand
+            local row, button = view.frame, view.button
+            row.Position = UDim2.fromOffset(8 + indent, 8 + (i - 1) * 34)
+            row.Size = UDim2.new(1, -24 - indent, 0, 28)
+            button.Text = node.text
+            button.Name = node.text
+            button.Size = UDim2.new(1, if canExpand then -88 else 0, 1, 0)
+            button.BackgroundTransparency = if node.id == self.selectedId then 0 else 1
+            button.BorderSizePixel = 0
+            view.padding.PaddingRight = UDim.new(0, 8)
+            if canExpand then
+                local state = view.state
+                if not state then
+                    state = ui.createButton(row, { text = "Expand v" })
+                    view.stateConnection = state.MouseButton1Click:Connect(function()
+                        local id = view.node.id
+                        self:Expand(id, not self.expanded[id])
+                    end)
+                end
+                state.Name = "State"
+                state.BackgroundTransparency = 1
+                state.Size = UDim2.fromOffset(80, 28)
+                state.Position = UDim2.new(1, -84, 0, 0)
+                state.Text = if self.expanded[node.id] then "Collapse ^" else "Expand v"
+                state.TextColor3 = colors.text
+                state.Font = button.Font
+                state.TextSize = button.TextSize
+                state.ZIndex = button.ZIndex + 1
+                state.Parent = row
+                view.state = state
+            elseif view.state then
+                view.stateConnection:Disconnect()
+                view.state:Destroy()
+                view.state = nil
+                view.stateConnection = nil
+            end
+            if created then row.Parent = self.frame end
+        end
+    end
+    for id, view in self.rowViews do
+        if not active[id] then
+            view.scope:Destroy()
+            view.frame:Destroy()
+            self.rowViews[id] = nil
+        end
     end
 end
 
@@ -1525,6 +1595,8 @@ function m.new(owner, opts)
     self.expanded = {}
     self.loaded = {}
     self.rows = {}
+    self.rowViews = {}
+    self.visibleNodes = {}
     self.maxDepth = opts.maxDepth or 32
     local empty = Instance.new("TextLabel")
     empty.Name = "Empty"
@@ -1539,24 +1611,37 @@ function m.new(owner, opts)
     empty.ZIndex = frame.ZIndex + 1
     empty.Parent = frame
     self.emptyLabel = empty
-    self.renderScope = scope.new()
     self.selected = lifecycle.event(self)
-    self.scope:Add(function() self.renderScope:Destroy() end)
-    self.scope:Connect(frame:GetPropertyChangedSignal("CanvasPosition"), function() render(self) end)
+    self.scope:Add(function()
+        for _, view in self.rowViews do view.scope:Destroy() end
+        table.clear(self.rowViews)
+    end)
+    self.scope:Connect(frame:GetPropertyChangedSignal("CanvasPosition"), function() render(self, true) end)
     self.scope:Connect(frame:GetPropertyChangedSignal("AbsoluteSize"), function() render(self) end)
     return self
 end
 
-function m:SetNodes(nodes)
+-- preserveState is intended for eager children with stable IDs (live properties).
+function m:SetNodes(nodes, preserveState, notify: boolean?)
     validate(nodes, {})
+    local selectedId = if preserveState then self.selectedId else nil
     self.nodes = nodes
-    self.expanded = {}
+    if not preserveState then self.expanded = {} end
     self.loaded = {}
     local hadSelection = self.selectedId ~= nil
     self.selectedId = nil
-    self.frame.CanvasPosition = Vector2.zero
+    flatten(self)
+    local selected
+    for _, entry in self.visibleNodes do
+        if entry.node.id == selectedId then selected = entry.node self.selectedId = selectedId break end
+    end
+    self.frame.CanvasPosition = if preserveState then Vector2.new(self.frame.CanvasPosition.X,
+        math.min(self.frame.CanvasPosition.Y, math.max(0, #self.visibleNodes * 34 + 16 - self.frame.AbsoluteSize.Y))) else Vector2.zero
     render(self)
-    if hadSelection then self.selected:Fire(nil) end
+    if notify ~= false then
+        if selected then self.selected:Fire(selected)
+        elseif hadSelection then self.selected:Fire(nil) end
+    end
 end
 
 function m:Expand(id, value: boolean)
@@ -1573,7 +1658,8 @@ function m:Expand(id, value: boolean)
                 if not valid then warn(err) return end
                 self.loaded = nextLoaded
             end
-            self.expanded[id] = value
+            local children = self.loaded[id] or node.children
+            self.expanded[id] = value and children ~= nil and #children > 0 or nil
             render(self)
             return
         end
@@ -1616,8 +1702,15 @@ function m:render()
 end
 
 function m:SetSyntax(value)
-    self.highlighted = syntaxHighlight.ValidateSyntax(value)
+    local highlighted = syntaxHighlight.ValidateSyntax(value)
+    local changed = self.highlighted ~= highlighted
+    self.highlighted = highlighted
     self:render()
+    if changed then self.syntaxChanged:Fire(highlighted) end
+end
+
+function m:OnSyntaxChanged(callback)
+    return self.scope:Connect(self.syntaxChanged.Event, callback)
 end
 
 function m:SetText(value: string)
@@ -1690,6 +1783,7 @@ function m.new(owner, opts)
     display.Parent = text
     self.highlightLabel = display
     self.changed = lifecycle.event(self)
+    self.syntaxChanged = lifecycle.event(self)
     self.scope:Connect(text:GetPropertyChangedSignal("Text"), function()
         self:render()
         self.changed:Fire(text.Text)

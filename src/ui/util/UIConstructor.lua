@@ -8,6 +8,7 @@ function m.createButton(parent: GuiObject, opts: types.ComponentOpts, zIndex: nu
     button.Name = opts.text
     button.BackgroundColor3 = colors.component
     button.TextColor3 = colors.text
+    button.RichText = false
     button.Text = opts.text
     button.ZIndex = zIndex or parent.ZIndex + 1
     button.Size = UDim2.new(1, 0, 0, 28)
@@ -20,6 +21,7 @@ function m.createTextbox(parent: GuiObject, opts: types.ComponentOpts, zIndex: n
     textbox.Name = opts.text
     textbox.BackgroundColor3 = colors.component
     textbox.TextColor3 = colors.text
+    textbox.RichText = false
     textbox.PlaceholderText = opts.text
     textbox.Text = ""
     textbox.ZIndex = zIndex or parent.ZIndex + 1

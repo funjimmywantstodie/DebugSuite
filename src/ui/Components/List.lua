@@ -5,24 +5,24 @@ local colors = require("../Colors")
 local ui = require("../util/UIConstructor")
 local lifecycle = require("../util/Lifecycle")
 local scope = require("../util/Scope")
+local syntaxHighlight = require("../SyntaxHighlight")
 
-local function render(self)
+local function render(self, scrolling)
     if self.destroyed then return end
-    self.renderScope:Destroy()
-    self.renderScope = scope.new()
-    for _, frame in self.rows do frame:Destroy() end
-    table.clear(self.rows)
-    local fixed, flexible = 0, 0
-    for _, column in self.columns do
-        if column.width then fixed += column.width else flexible += 1 end
-    end
-    local available = math.max(0, self.viewport.AbsoluteSize.X - 8)
-    local fillWidth = if flexible > 0 then math.max(60, (available - fixed) / flexible) else 0
-    self.widths = {}
-    self.width = 0
-    for i, column in self.columns do
-        self.widths[i] = column.width or fillWidth
-        self.width += self.widths[i]
+    if not scrolling then
+        local fixed, flexible = 0, 0
+        for _, column in self.columns do
+            if column.width then fixed += column.width else flexible += 1 end
+        end
+        local available = math.max(0, self.viewport.AbsoluteSize.X - 8)
+        local fillWidth = if flexible > 0 then math.max(60, (available - fixed) / flexible) else 0
+        self.widths = {}
+        self.width = 0
+        for i, column in self.columns do
+            self.widths[i] = column.width or fillWidth
+            self.width += self.widths[i]
+        end
+        self.viewport.CanvasSize = UDim2.fromOffset(if self.width > available then self.width else 0, #self.filtered * self.rowHeight)
     end
     local offset = 0
     for i, header in self.headers do
@@ -33,34 +33,63 @@ local function render(self)
     local height = self.rowHeight
     local first = math.max(1, math.floor(self.viewport.CanvasPosition.Y / height) + 1)
     local count = math.ceil(self.viewport.AbsoluteSize.Y / height) + 2
-    self.viewport.CanvasSize = UDim2.fromOffset(if self.width > available then self.width else 0, #self.filtered * height)
+    local active = {}
+    table.clear(self.rows)
     for index = first, math.min(#self.filtered, first + count) do
         local record = self.filtered[index]
-        local row = Instance.new("Frame")
-        row.Size = UDim2.fromOffset(math.max(self.width, self.viewport.AbsoluteSize.X - 8), height)
-        row.Position = UDim2.fromOffset(0, (index - 1) * height)
-        row.BackgroundColor3 = if record.id == self.selectedId then colors.sectionHeader else colors.section
-        row.BorderSizePixel = 0
-        row.ClipsDescendants = true
-        row.ZIndex = self.viewport.ZIndex + 1
-        row.Parent = self.viewport
-        table.insert(self.rows, row)
-        local offset = 0
-        for i, column in self.columns do
-            local value = record.values[column.key]
-            local cell = ui.createButton(row, { text = if value == nil then "" else tostring(value) })
-            cell.TextXAlignment = Enum.TextXAlignment.Left
-            cell.TextTruncate = Enum.TextTruncate.AtEnd
-            cell.BackgroundTransparency = 1
-            cell.BorderSizePixel = 0
-            cell.Position = UDim2.fromOffset(offset, 0)
-            cell.Size = UDim2.new(0, self.widths[i], 1, 0)
-            self.renderScope:Connect(cell.MouseButton1Click, function() self:Select(record.id) end)
-            local padding = Instance.new("UIPadding")
-            padding.PaddingLeft = UDim.new(0, 8)
-            padding.PaddingRight = UDim.new(0, 8)
-            padding.Parent = cell
-            offset += self.widths[i]
+        local view = self.rowViews[record.id]
+        local created = view == nil
+        if created then
+            local row = Instance.new("Frame")
+            row.BorderSizePixel = 0
+            row.ClipsDescendants = true
+            row.ZIndex = self.viewport.ZIndex + 1
+            view = { frame = row, cells = {}, scope = scope.new(), record = record }
+            self.rowViews[record.id] = view
+            for _, column in self.columns do
+                local cell = ui.createButton(row, { text = "" })
+                cell.TextXAlignment = Enum.TextXAlignment.Left
+                cell.RichText = syntaxHighlight.ValidateSyntax(column.syntax)
+                if cell.RichText then cell.Font = Enum.Font.Code end
+                cell.TextTruncate = Enum.TextTruncate.AtEnd
+                cell.BackgroundTransparency = 1
+                cell.BorderSizePixel = 0
+                view.scope:Connect(cell.MouseButton1Click, function() self:Select(view.record.id) end)
+                local padding = Instance.new("UIPadding")
+                padding.PaddingLeft = UDim.new(0, 8)
+                padding.PaddingRight = UDim.new(0, 8)
+                padding.Parent = cell
+                table.insert(view.cells, cell)
+            end
+        end
+        active[record.id] = true
+        table.insert(self.rows, view.frame)
+        if created or not scrolling then
+            view.record = record
+            local row = view.frame
+            row.Size = UDim2.fromOffset(math.max(self.width, self.viewport.AbsoluteSize.X - 8), height)
+            row.Position = UDim2.fromOffset(0, (index - 1) * height)
+            row.BackgroundColor3 = if record.id == self.selectedId then colors.sectionHeader else colors.section
+            local offset = 0
+            for i, column in self.columns do
+                local value = record.values[column.key]
+                local cell = view.cells[i]
+                local raw = if value == nil then "" else tostring(value)
+                -- Styling is display-only: filtering, selection and sorting use raw values.
+                cell.Text = if cell.RichText then syntaxHighlight.Highlight(raw) else raw
+                cell.Name = raw
+                cell.Position = UDim2.fromOffset(offset, 0)
+                cell.Size = UDim2.new(0, self.widths[i], 1, 0)
+                offset += self.widths[i]
+            end
+            if created then row.Parent = self.viewport end
+        end
+    end
+    for id, view in self.rowViews do
+        if not active[id] then
+            view.scope:Destroy()
+            view.frame:Destroy()
+            self.rowViews[id] = nil
         end
     end
 end
@@ -78,14 +107,17 @@ function m.new(owner, opts)
     self.records = {}
     self.filtered = {}
     self.rows = {}
+    self.rowViews = {}
     self.headers = {}
     self.columns = opts.columns or { { key = "text", text = "Text" } }
     self.rowHeight = math.max(16, opts.rowHeight or 26)
     self.maxRecords = math.max(1, opts.maxRecords or 5000)
     self.filter = ""
-    self.renderScope = scope.new()
     self.selected = lifecycle.event(self)
-    self.scope:Add(function() self.renderScope:Destroy() end)
+    self.scope:Add(function()
+        for _, view in self.rowViews do view.scope:Destroy() end
+        table.clear(self.rowViews)
+    end)
     local viewport = Instance.new("ScrollingFrame")
     viewport.BackgroundTransparency = 1
     viewport.BorderSizePixel = 0
@@ -121,12 +153,13 @@ function m.new(owner, opts)
     end
     self.width = offset
     render(self)
-    self.scope:Connect(viewport:GetPropertyChangedSignal("CanvasPosition"), function() render(self) end)
+    self.scope:Connect(viewport:GetPropertyChangedSignal("CanvasPosition"), function() render(self, true) end)
     self.scope:Connect(viewport:GetPropertyChangedSignal("AbsoluteSize"), function() render(self) end)
     return self
 end
 
-function m:Refresh()
+-- notify=false updates selection state without dispatching a selection event.
+function m:Refresh(notify: boolean?)
     table.clear(self.filtered)
     for _, record in self.records do
         local matches = self.filter == ""
@@ -146,13 +179,10 @@ function m:Refresh()
     end
     local selected
     for _, record in self.filtered do if record.id == self.selectedId then selected = record end end
-    if self.selectedId and not selected then
-        self.selectedId = nil
-        self.selectedRecord = nil
-        self.selected:Fire(nil)
-    end
-    if selected and selected ~= self.selectedRecord then
-        self.selectedRecord = selected
+    local previous, hadSelection = self.selectedRecord, self.selectedId ~= nil
+    self.selectedId = if selected then selected.id else nil
+    self.selectedRecord = selected
+    if notify ~= false and (selected ~= previous or (hadSelection and not selected)) then
         self.selected:Fire(selected)
     end
     self.viewport.CanvasPosition = Vector2.new(self.viewport.CanvasPosition.X, math.min(self.viewport.CanvasPosition.Y,
@@ -160,7 +190,7 @@ function m:Refresh()
     render(self)
 end
 
-function m:SetRecords(records)
+function m:SetRecords(records, notify: boolean?)
     local seen = {}
     local nextRecords = {}
     local start = math.max(1, #records - self.maxRecords + 1)
@@ -172,7 +202,7 @@ function m:SetRecords(records)
         if i >= start then table.insert(nextRecords, record) end
     end
     self.records = nextRecords
-    self:Refresh()
+    self:Refresh(notify)
 end
 
 function m:Append(records)
@@ -192,9 +222,9 @@ function m:Append(records)
     self:SetRecords(nextRecords)
 end
 
-function m:SetFilter(value: string)
+function m:SetFilter(value: string, notify: boolean?)
     self.filter = string.lower(value)
-    self:Refresh()
+    self:Refresh(notify)
 end
 
 function m:SetSort(key: string, ascending: boolean?)
@@ -203,13 +233,13 @@ function m:SetSort(key: string, ascending: boolean?)
     self:Refresh()
 end
 
-function m:Select(id)
+function m:Select(id, notify: boolean?)
     for _, record in self.filtered do
         if record.id == id then
             self.selectedId = id
             self.selectedRecord = record
             render(self)
-            self.selected:Fire(record)
+            if notify ~= false then self.selected:Fire(record) end
             return
         end
     end
